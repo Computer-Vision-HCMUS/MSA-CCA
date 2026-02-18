@@ -1,32 +1,32 @@
 """
-Ý nghĩa hình học của Canonical Correlation Analysis (CCA).
+Geometric meaning of Canonical Correlation Analysis (CCA).
 
-Mô tả các khái niệm hình học: không gian biến, hướng canonical, góc giữa
-các biến canonical, và mối liên hệ tương quan–góc.
+Describes the geometric concepts: variable spaces, canonical directions,
+angles between canonical variates, and the correlation–angle relationship (r = cos θ).
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
     from core import CCA
 
 
-def get_geometry_description(cca: "CCA", language: str = "vi") -> str:
+def get_geometry_description(cca: "CCA", language: str = "en") -> str:
     """
-    Trả về mô tả ý nghĩa hình học của CCA dựa trên kết quả đã fit.
+    Return a text description of the geometric meaning of CCA from fitted results.
 
     Args:
-        cca: Đối tượng CCA đã fit (có x_scores, y_scores, canonical_correlations, ...).
-        language: "vi" (tiếng Việt) hoặc "en" (tiếng Anh).
+        cca: Fitted CCA object (with x_scores, y_scores, canonical_correlations, etc.).
+        language: "en" (English) or "vi" (Vietnamese).
 
     Returns:
-        Chuỗi mô tả ý nghĩa hình học.
+        Markdown string describing the geometry.
     """
     r = cca.canonical_correlations
     n_comp = cca.n_components
-    # Góc (radian) tương ứng: correlation = cos(angle) khi variates đã chuẩn hóa
+    # Angle in radians: correlation = cos(angle) when variates are standardized
     angles_rad = np.arccos(np.clip(r, -1, 1))
     angles_deg = np.degrees(angles_rad)
 
@@ -102,14 +102,14 @@ def get_geometry_description(cca: "CCA", language: str = "vi") -> str:
 
 def get_canonical_angles_degrees(cca: "CCA") -> np.ndarray:
     """
-    Trả về góc (độ) tương ứng với mỗi canonical correlation.
-    Công thức: r = cos(θ) ⇒ θ = arccos(r).
+    Return the angle (degrees) corresponding to each canonical correlation.
+    Formula: r = cos(θ) ⇒ θ = arccos(r).
 
     Args:
-        cca: Đối tượng CCA đã fit.
+        cca: Fitted CCA object.
 
     Returns:
-        Mảng góc (độ), shape (n_components,).
+        Array of angles in degrees, shape (n_components,).
     """
     r = np.asarray(cca.canonical_correlations)
     r = np.clip(r, -1.0, 1.0)
@@ -118,12 +118,12 @@ def get_canonical_angles_degrees(cca: "CCA") -> np.ndarray:
 
 def plot_correlation_angle(cca: "CCA", figsize: Tuple[float, float] = (10, 4)) -> plt.Figure:
     """
-    Vẽ hai đồ thị: (1) Canonical correlations; (2) Góc (độ) tương ứng với từng CC.
-    Thể hiện mối quan hệ r = cos(θ).
+    Plot (1) canonical correlations and (2) corresponding angles (degrees) per CC.
+    Illustrates the relationship r = cos(θ).
 
     Args:
-        cca: Đối tượng CCA đã fit.
-        figsize: Kích thước figure.
+        cca: Fitted CCA object.
+        figsize: Figure size.
 
     Returns:
         matplotlib Figure.
@@ -156,19 +156,19 @@ def plot_correlation_angle(cca: "CCA", figsize: Tuple[float, float] = (10, 4)) -
 
 def plot_geometry_schematic(figsize: Tuple[float, float] = (8, 5)) -> plt.Figure:
     """
-    Vẽ sơ đồ minh họa ý nghĩa hình học: hai không gian, hai hướng canonical,
-    và góc θ (tương quan r = cos θ). Không dùng dữ liệu thật, chỉ minh họa khái niệm.
+    Schematic of the geometric meaning: two directions U and V and angle θ
+    (correlation r = cos θ). Uses no real data; conceptual only.
 
     Returns:
         matplotlib Figure.
     """
     fig, ax = plt.subplots(figsize=figsize)
 
-    # Vòng tròn đơn vị (góc)
+    # Unit circle (angle reference)
     theta = np.linspace(0, 2 * np.pi, 100)
     ax.plot(np.cos(theta), np.sin(theta), "k-", linewidth=0.8, alpha=0.5)
 
-    # Ví dụ: r = 0.8 => angle ~ 37°
+    # Example: r = 0.8 => angle ~ 37°
     r_ex = 0.8
     angle_ex = np.arccos(r_ex)
     ax.arrow(0, 0, 1, 0, head_width=0.05, head_length=0.05, fc="steelblue", ec="steelblue", linewidth=2, label="U (X1)")
@@ -176,7 +176,7 @@ def plot_geometry_schematic(figsize: Tuple[float, float] = (8, 5)) -> plt.Figure
     ax.text(1.15, 0, "U", fontsize=12, fontweight="bold", color="steelblue")
     ax.text(np.cos(angle_ex) * 1.15, np.sin(angle_ex) * 1.15, "V", fontsize=12, fontweight="bold", color="coral")
 
-    # Cung góc
+    # Angle arc
     arc_theta = np.linspace(0, angle_ex, 30)
     ax.plot(0.3 * np.cos(arc_theta), 0.3 * np.sin(arc_theta), "green", linewidth=2)
     ax.text(0.38 * np.cos(angle_ex / 2), 0.38 * np.sin(angle_ex / 2), "θ", fontsize=14, color="green", fontweight="bold")
@@ -196,12 +196,12 @@ def plot_geometry_schematic(figsize: Tuple[float, float] = (8, 5)) -> plt.Figure
 
 def plot_first_pair_scatter_with_angle(cca: "CCA", figsize: Tuple[float, float] = (6, 5)) -> plt.Figure:
     """
-    Vẽ scatter U1 vs V1 và đường chéo (góc 45°). Gợi ý: điểm càng gần đường chéo
-    thì tương quan càng cao; độ lệch so với đường chéo liên quan góc θ.
+    Scatter U₁ vs V₁ with the diagonal (45° line). Points close to the diagonal
+    indicate high correlation; spread around the diagonal relates to angle θ.
 
     Args:
-        cca: Đối tượng CCA đã fit.
-        figsize: Kích thước figure.
+        cca: Fitted CCA object.
+        figsize: Figure size.
 
     Returns:
         matplotlib Figure.

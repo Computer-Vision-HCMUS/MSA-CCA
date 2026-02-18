@@ -247,7 +247,7 @@ try:
             "Canonical Variates",
             "Weights",
             "Loadings",
-            "📐 Ý nghĩa hình học",
+            "📐 Geometric meaning",
         ])
         
         with tab1:
@@ -376,10 +376,10 @@ try:
                 st.pyplot(fig)
         
         with tab5:
-            st.markdown("### Ý nghĩa hình học của CCA")
-            st.markdown(get_geometry_description(cca, language="vi"))
+            st.markdown("### Geometric meaning of CCA")
+            st.markdown(get_geometry_description(cca, language="en"))
             st.markdown("---")
-            st.markdown("#### Đồ thị minh họa")
+            st.markdown("#### Illustrations")
             col_geo1, col_geo2 = st.columns(2)
             with col_geo1:
                 fig_r_angle = plot_correlation_angle(cca)
@@ -389,7 +389,7 @@ try:
                 fig_schematic = plot_geometry_schematic()
                 st.pyplot(fig_schematic)
                 plt.close(fig_schematic)
-            st.markdown("**Scatter U₁ vs V₁ (CC1):** điểm gần đường chéo U=V tương ứng tương quan cao (góc θ nhỏ).")
+            st.markdown("**Scatter U₁ vs V₁ (CC1):** points close to the diagonal U=V correspond to high correlation (small angle θ).")
             fig_scatter_angle = plot_first_pair_scatter_with_angle(cca)
             st.pyplot(fig_scatter_angle)
             plt.close(fig_scatter_angle)
