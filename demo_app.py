@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from utils import read_csv, analyze_data, standardize_data
 from core import CCA
-from geometry import (
+from geometry_cca import (
     get_geometry_description,
     plot_correlation_angle,
     plot_geometry_schematic,
