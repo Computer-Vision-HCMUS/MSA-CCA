@@ -77,7 +77,6 @@ Follow the prompts to:
 Launch the interactive web application:
 
 ```bash
-.\\.venv\\Scripts\\activate
 streamlit run demo_app.py
 ```
 
@@ -155,7 +154,15 @@ The analysis provides:
 
 ### utils.py
 
-- `read_csv(file_path)`: Rewrapper class using sklearn
+- `read_csv(file_path)`: Read and clean CSV files
+- `write_csv(df, file_path)`: Write DataFrame to CSV
+- `visualize_data(df, title)`: Create comprehensive visualizations
+- `analyze_data(df)`: Perform statistical analysis
+- `standardize_data(df)`: Standardize data (mean=0, std=1)
+
+### core.py
+
+- `CCA(n_components)`: CCA wrapper class using sklearn
   - `fit(X1, X2)`: Fit CCA model using sklearn's algorithm
   - `transform(X1, X2)`: Transform data to canonical space
   - `fit_transform(X1, X2)`: Fit and transform in one step
@@ -171,15 +178,7 @@ The visualization system automatically adapts to the number of components:
   - Scatter plots for top 6 components
   - Separate detailed heatmaps showing up to 10 components
   - Annotations in heatmaps when ≤5 components
-  - Simplified view when >5 componen
-### core.py
-
-- `CCA(n_components)`: CCA class
-  - `fit(X1, X2)`: Fit CCA model
-  - `transform(X1, X2)`: Transform data to canonical space
-  - `fit_transform(X1, X2)`: Fit and transform in one step
-  - `print_summary()`: Print detailed results
-  - `plot_results()`: Visualize CCA results
+  - Simplified view when >5 components
 
 ## Technical Details
 
@@ -188,8 +187,6 @@ The visualization system automatically adapts to the number of components:
 - **Scalability**: Efficient for large datasets with many features
 - **Components**: Automatically computes up to min(p, q) components
 - **Standardization**: Recommended for interpretability (enabled by default)
-...
-```
 
 ## Requirements
 
@@ -198,6 +195,7 @@ The visualization system automatically adapts to the number of components:
 - Pandas >= 1.3.0
 - Matplotlib >= 3.4.0
 - Seaborn >= 0.11.0
+- Scikit-learn >= 1.0.0
 - Streamlit >= 1.20.0
 
 ## Theory
