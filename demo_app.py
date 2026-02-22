@@ -431,3 +431,8 @@ st.markdown("""
     <p style='font-size: 0.8rem;'>Built with Streamlit | MSA Project</p>
 </div>
 """, unsafe_allow_html=True)
+
+
+if __name__ == "__main__":
+    # This allows the app to run with: streamlit run demo_app.py
+    pass

@@ -1,20 +1,28 @@
 """
-Canonical Correlation Analysis (CCA) Implementation using sklearn
+Canonical Correlation Analysis (CCA) Implementation via Covariance Matrices
+Based on Algorithm 1: CCA via Covariance Matrices using Cholesky Decomposition
 """
 import numpy as np
 import pandas as pd
 from typing import Tuple, Dict, Any
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.cross_decomposition import CCA as SklearnCCA
+from scipy import linalg
 
 
 class CCA:
     """
-    Canonical Correlation Analysis wrapper using sklearn
+    Canonical Correlation Analysis via Covariance Matrices
     
     CCA finds linear combinations of variables from two datasets
     that have maximum correlation with each other.
+    
+    Algorithm: CCA via Covariance Matrices using Cholesky Decomposition
+    Steps:
+    1. Cholesky Decomposition: Sigma11 = U1^T * U1 and Sigma22 = U2^T * U2
+    2. Form the matrix K = (U1^-1)^T * Sigma12 * (U2^-1)
+    3. Singular Value Decomposition (SVD): K = U_hat * Lambda * V_hat^T
+    4. Recover Canonical Variables: rho = diag(Lambda), a = U1^-1 * U_hat and b = U2^-1 * V_hat
     """
     
     def __init__(self, n_components: int = None):
@@ -26,10 +34,9 @@ class CCA:
                          If None, uses min(n_features_X1, n_features_X2)
         """
         self.n_components = n_components
-        self.sklearn_cca = None
         self.canonical_correlations = None
-        self.x_weights = None  # Canonical weights for X1
-        self.y_weights = None  # Canonical weights for X2
+        self.x_weights = None  # Canonical weights for X1 (a)
+        self.y_weights = None  # Canonical weights for X2 (b)
         self.x_scores = None   # Canonical variates for X1
         self.y_scores = None   # Canonical variates for X2
         self.x_loadings = None # Loadings for X1
@@ -39,9 +46,23 @@ class CCA:
         self.X1_mean = None
         self.X2_mean = None
         
+        # Internal matrices
+        self.Sigma11 = None  # Covariance matrix of X1
+        self.Sigma22 = None  # Covariance matrix of X2
+        self.Sigma12 = None  # Cross-covariance matrix
+        self.U1 = None       # Cholesky factor for Sigma11
+        self.U2 = None       # Cholesky factor for Sigma22
+        
     def fit(self, X1: np.ndarray, X2: np.ndarray) -> 'CCA':
         """
-        Fit CCA model using sklearn
+        Fit CCA model using covariance matrices and Cholesky decomposition
+        
+        Algorithm Steps:
+        1. Compute covariance matrices Sigma11, Sigma22, Sigma12
+        2. Cholesky Decomposition: Sigma11 = U1^T * U1 and Sigma22 = U2^T * U2
+        3. Form matrix K = (U1^-1)^T * Sigma12 * (U2^-1)
+        4. Compute SVD of K: K = U_hat * Lambda * V_hat^T
+        5. Recover canonical vectors: a = U1^-1 * U_hat and b = U2^-1 * V_hat
         
         Args:
             X1: First dataset, shape (n_samples, n_features_X1)
@@ -74,33 +95,90 @@ class CCA:
         else:
             self.n_components = min(self.n_components, p, q)
         
-        # Store means for later use
+        # Store means for centering
         self.X1_mean = np.mean(X1_array, axis=0)
         self.X2_mean = np.mean(X2_array, axis=0)
         
-        # Fit sklearn CCA
-        self.sklearn_cca = SklearnCCA(n_components=self.n_components, max_iter=1000)
-        self.sklearn_cca.fit(X1_array, X2_array)
-        
-        # Transform to get canonical variates
-        self.x_scores, self.y_scores = self.sklearn_cca.transform(X1_array, X2_array)
-        
-        # Get canonical weights (coefficients)
-        self.x_weights = self.sklearn_cca.x_weights_
-        self.y_weights = self.sklearn_cca.y_weights_
-        
-        # Compute canonical correlations
-        self.canonical_correlations = np.zeros(self.n_components)
-        for i in range(self.n_components):
-            self.canonical_correlations[i] = np.corrcoef(
-                self.x_scores[:, i], 
-                self.y_scores[:, i]
-            )[0, 1]
-        
-        # Compute loadings (correlations between original variables and canonical variates)
+        # Center the data
         X1_centered = X1_array - self.X1_mean
         X2_centered = X2_array - self.X2_mean
         
+        print("\n" + "="*70)
+        print("ALGORITHM 1: CCA via Covariance Matrices")
+        print("="*70)
+        
+        # Step 1: Compute covariance matrices
+        print("\n/* Computing Covariance Matrices */")
+        self.Sigma11 = (X1_centered.T @ X1_centered) / (n_samples - 1)
+        self.Sigma22 = (X2_centered.T @ X2_centered) / (n_samples - 1)
+        self.Sigma12 = (X1_centered.T @ X2_centered) / (n_samples - 1)
+        print(f"  Sigma11 shape: {self.Sigma11.shape}")
+        print(f"  Sigma22 shape: {self.Sigma22.shape}")
+        print(f"  Sigma12 shape: {self.Sigma12.shape}")
+        
+        # Step 2: Cholesky Decomposition
+        print("\n/* Step 1: Cholesky Decomposition */")
+        print("  Cholesky factors: Sigma11 = U1^T * U1 and Sigma22 = U2^T * U2")
+        
+        # Add small regularization for numerical stability
+        reg = 1e-6
+        self.U1 = linalg.cholesky(self.Sigma11 + reg * np.eye(p), lower=False)
+        self.U2 = linalg.cholesky(self.Sigma22 + reg * np.eye(q), lower=False)
+        print(f"  U1 shape: {self.U1.shape}")
+        print(f"  U2 shape: {self.U2.shape}")
+        
+        # Step 3: Form the matrix K
+        print("\n/* Step 2: Form the matrix K */")
+        print("  Compute K = (U1^-1)^T * Sigma12 * (U2^-1)")
+        
+        U1_inv = linalg.inv(self.U1)
+        U2_inv = linalg.inv(self.U2)
+        K = U1_inv.T @ self.Sigma12 @ U2_inv
+        print(f"  K shape: {K.shape}")
+        
+        # Step 4: Singular Value Decomposition (SVD)
+        print("\n/* Step 3: Singular Value Decomposition (SVD) */")
+        print("  Compute SVD of K: K = U_hat * Lambda * V_hat^T")
+        
+        U_hat, Lambda, Vt_hat = linalg.svd(K, full_matrices=False)
+        V_hat = Vt_hat.T
+        
+        # Take only the first n_components
+        U_hat = U_hat[:, :self.n_components]
+        Lambda = Lambda[:self.n_components]
+        V_hat = V_hat[:, :self.n_components]
+        
+        print(f"  U_hat shape: {U_hat.shape}")
+        print(f"  Lambda shape: {Lambda.shape}")
+        print(f"  V_hat shape: {V_hat.shape}")
+        
+        # Step 5: Recover Canonical Variables
+        print("\n/* Step 4: Recover Canonical Variables */")
+        print("  Set canonical correlations: rho = diag(Lambda)")
+        self.canonical_correlations = Lambda
+        print(f"  rho = {self.canonical_correlations}")
+        
+        print("  Solve for vectors: a = U1^-1 * U_hat and b = U2^-1 * V_hat")
+        self.x_weights = U1_inv @ U_hat  # a
+        self.y_weights = U2_inv @ V_hat  # b
+        print(f"  a shape: {self.x_weights.shape}")
+        print(f"  b shape: {self.y_weights.shape}")
+        
+        # Compute canonical variates (scores)
+        self.x_scores = X1_centered @ self.x_weights
+        self.y_scores = X2_centered @ self.y_weights
+        
+        # Verify the canonical correlations
+        print("\n/* Verification */")
+        computed_corr = np.zeros(self.n_components)
+        for i in range(self.n_components):
+            computed_corr[i] = np.corrcoef(
+                self.x_scores[:, i], 
+                self.y_scores[:, i]
+            )[0, 1]
+        print(f"  Computed correlations: {computed_corr}")
+        
+        # Compute loadings (correlations between original variables and canonical variates)
         self.x_loadings = np.zeros((p, self.n_components))
         self.y_loadings = np.zeros((q, self.n_components))
         
@@ -116,10 +194,12 @@ class CCA:
                     self.y_scores[:, i]
                 )[0, 1]
         
-        print(f"✓ CCA fitted successfully")
+        print("\n" + "="*70)
+        print("✓ CCA fitted successfully")
         print(f"  Dataset shapes: X1={X1_array.shape}, X2={X2_array.shape}")
         print(f"  Components: {self.n_components}")
         print(f"  Canonical correlations: {self.canonical_correlations}")
+        print("="*70)
         
         return self
     
@@ -134,20 +214,18 @@ class CCA:
         Returns:
             Tuple of transformed datasets
         """
-        if X1 is not None or X2 is not None:
+        if X1 is not None:
             X1_array = X1.values if isinstance(X1, pd.DataFrame) else X1
-            X2_array = X2.values if isinstance(X2, pd.DataFrame) else X2
-            
-            if X1_array is not None and X2_array is not None:
-                scores_X1, scores_X2 = self.sklearn_cca.transform(X1_array, X2_array)
-            elif X1_array is not None:
-                scores_X1 = self.sklearn_cca.transform(X1_array)[0]
-                scores_X2 = self.y_scores
-            else:
-                scores_X1 = self.x_scores
-                scores_X2 = self.sklearn_cca.transform(X2_array)[1]
+            X1_centered = X1_array - self.X1_mean
+            scores_X1 = X1_centered @ self.x_weights
         else:
             scores_X1 = self.x_scores
+            
+        if X2 is not None:
+            X2_array = X2.values if isinstance(X2, pd.DataFrame) else X2
+            X2_centered = X2_array - self.X2_mean
+            scores_X2 = X2_centered @ self.y_weights
+        else:
             scores_X2 = self.y_scores
             
         return scores_X1, scores_X2
@@ -289,7 +367,7 @@ class CCA:
         plt.legend()
         plt.grid(True, alpha=0.3, axis='x')
         
-        # 4+. Scatter plots of canonical variates
+        # 4. Scatter plots of canonical variates
         scatter_positions = [4, 5, 6, 7, 8, 9] if layout_rows == 3 else [4, 5, 6, 7, 8, 9, 10, 11, 12]
         for i in range(min(n_scatter, len(scatter_positions))):
             if i >= self.n_components:
