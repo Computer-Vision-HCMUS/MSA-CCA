@@ -9,6 +9,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from utils import read_csv, analyze_data, standardize_data
 from core import CCA
+from geometry_cca import (
+    get_geometry_description,
+    plot_correlation_angle,
+    plot_geometry_schematic,
+    plot_first_pair_scatter_with_angle,
+)
 import io
 
 
@@ -236,11 +242,12 @@ try:
         st.subheader("📊 Visualizations")
         
         # Tabs for different visualizations
-        tab1, tab2, tab3, tab4 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
             "Canonical Correlations",
             "Canonical Variates",
             "Weights",
-            "Loadings"
+            "Loadings",
+            "📐 Geometric meaning",
         ])
         
         with tab1:
@@ -367,6 +374,25 @@ try:
                 ax.set_title('X2 Loadings', fontweight='bold')
                 plt.tight_layout()
                 st.pyplot(fig)
+        
+        with tab5:
+            st.markdown("### Geometric meaning of CCA")
+            st.markdown(get_geometry_description(cca, language="en"))
+            st.markdown("---")
+            st.markdown("#### Illustrations")
+            col_geo1, col_geo2 = st.columns(2)
+            with col_geo1:
+                fig_r_angle = plot_correlation_angle(cca)
+                st.pyplot(fig_r_angle)
+                plt.close(fig_r_angle)
+            with col_geo2:
+                fig_schematic = plot_geometry_schematic()
+                st.pyplot(fig_schematic)
+                plt.close(fig_schematic)
+            st.markdown("**Scatter U₁ vs V₁ (CC1):** points close to the diagonal U=V correspond to high correlation (small angle θ).")
+            fig_scatter_angle = plot_first_pair_scatter_with_angle(cca)
+            st.pyplot(fig_scatter_angle)
+            plt.close(fig_scatter_angle)
         
         # Download results
         st.markdown("---")
