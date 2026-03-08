@@ -9,6 +9,52 @@ from utils import read_csv, write_csv, visualize_data, analyze_data, standardize
 from core import CCA
 
 
+def _parse_matrix_line(line: str) -> list:
+    """Parse one line into list of floats (comma or space separated)."""
+    line = line.strip().replace(",", " ")
+    return [float(x) for x in line.split()]
+
+
+def input_matrix_interactive(name: str, prefix: str = "X") -> pd.DataFrame:
+    """
+    Let user input a matrix directly: rows x cols, then one row per line.
+    Returns a DataFrame with columns prefix0, prefix1, ... (e.g. X0, X1 or Y0, Y1).
+    """
+    print(f"\n--- Nhập tập {name} ---")
+    while True:
+        try:
+            dim = input("Số dòng, số cột (ví dụ: 5 3): ").strip().split()
+            if len(dim) != 2:
+                print("  Nhập đúng 2 số: số dòng và số cột.")
+                continue
+            n_rows, n_cols = int(dim[0]), int(dim[1])
+            if n_rows < 1 or n_cols < 1:
+                print("  Số dòng và số cột phải >= 1.")
+                continue
+            break
+        except ValueError:
+            print("  Vui lòng nhập số nguyên hợp lệ.")
+    print(f"Nhập {n_rows} dòng, mỗi dòng {n_cols} giá trị (cách nhau bằng dấu phẩy hoặc space):")
+    rows = []
+    for i in range(n_rows):
+        while True:
+            line = input(f"  Dòng {i+1}: ").strip()
+            try:
+                values = _parse_matrix_line(line)
+                if len(values) != n_cols:
+                    print(f"    Cần đúng {n_cols} giá trị, đã nhập {len(values)}.")
+                    continue
+                rows.append(values)
+                break
+            except ValueError:
+                print("    Chỉ chấp nhận số thực (ví dụ: 1.2 3 4.5).")
+    arr = np.array(rows)
+    cols = [f"{prefix}{j}" for j in range(n_cols)]
+    df = pd.DataFrame(arr, columns=cols)
+    print(f"✓ Đã nhập {name}: shape {df.shape}")
+    return df
+
+
 def main():
     """
     Main function to run CCA analysis
@@ -17,38 +63,49 @@ def main():
     print(" CANONICAL CORRELATION ANALYSIS (CCA) ")
     print("="*70 + "\n")
     
-    # Get user input for file paths
-    print("Enter input data files:")
+    # Choose data source: file or direct input
+    print("Chọn nguồn dữ liệu:")
+    print("  1 - Import từ file CSV (X1, X2)")
+    print("  2 - Nhập trực tiếp hai tập X, Y")
     print("-" * 50)
+    choice = input("Chọn (1 hoặc 2, mặc định: 1): ").strip() or "1"
     
-    # Default files in current directory
-    default_x1 = "AQ_X1.csv"
-    default_x2 = "AQ_X2.csv"
-    
-    x1_path = input(f"Path to X1 dataset (default: {default_x1}): ").strip()
-    if not x1_path:
-        x1_path = default_x1
-    
-    x2_path = input(f"Path to X2 dataset (default: {default_x2}): ").strip()
-    if not x2_path:
-        x2_path = default_x2
-    
-    # Check if files exist
-    if not os.path.exists(x1_path):
-        print(f"✗ Error: File '{x1_path}' not found!")
-        return
-    
-    if not os.path.exists(x2_path):
-        print(f"✗ Error: File '{x2_path}' not found!")
-        return
-    
-    print("\n" + "="*70)
-    print("STEP 1: LOADING DATA")
-    print("="*70)
-    
-    # Read data
-    X1 = read_csv(x1_path)
-    X2 = read_csv(x2_path)
+    if choice == "2":
+        print("\n" + "="*70)
+        print("STEP 1: NHẬP DỮ LIỆU TRỰC TIẾP (X, Y)")
+        print("="*70)
+        X1 = input_matrix_interactive("X (X1)", prefix="X")
+        X2 = input_matrix_interactive("Y (X2)", prefix="Y")
+    else:
+        # Get user input for file paths
+        print("Enter input data files:")
+        print("-" * 50)
+        
+        default_x1 = "AQ_X1.csv"
+        default_x2 = "AQ_X2.csv"
+        
+        x1_path = input(f"Path to X1 dataset (default: {default_x1}): ").strip()
+        if not x1_path:
+            x1_path = default_x1
+        
+        x2_path = input(f"Path to X2 dataset (default: {default_x2}): ").strip()
+        if not x2_path:
+            x2_path = default_x2
+        
+        if not os.path.exists(x1_path):
+            print(f"✗ Error: File '{x1_path}' not found!")
+            return
+        
+        if not os.path.exists(x2_path):
+            print(f"✗ Error: File '{x2_path}' not found!")
+            return
+        
+        print("\n" + "="*70)
+        print("STEP 1: LOADING DATA")
+        print("="*70)
+        
+        X1 = read_csv(x1_path)
+        X2 = read_csv(x2_path)
     
     # Check if datasets have the same number of samples
     if len(X1) != len(X2):
