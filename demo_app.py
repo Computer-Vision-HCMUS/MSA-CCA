@@ -56,14 +56,20 @@ st.markdown('<div class="main-header">📊 Canonical Correlation Analysis (CCA) 
 st.sidebar.title("⚙️ Configuration")
 st.sidebar.markdown("---")
 
+# Data source
+st.sidebar.subheader("📁 Nguồn dữ liệu")
+data_source = st.sidebar.radio(
+    "Chọn cách nhập dữ liệu",
+    ["📁 File mặc định (AQ_X1, AQ_X2)", "📤 Upload file CSV", "✏️ Nhập trực tiếp X, Y"],
+    index=0,
+    help="File mặc định / Upload CSV / Nhập/paste bảng X, Y trực tiếp"
+)
 
-# File upload section
-st.sidebar.subheader("📁 Data Upload")
-
-uploaded_file_x1 = st.sidebar.file_uploader("Upload X1 Dataset (CSV)", type=['csv'], key='x1')
-uploaded_file_x2 = st.sidebar.file_uploader("Upload X2 Dataset (CSV)", type=['csv'], key='x2')
-
-use_default = st.sidebar.checkbox("Use default files (AQ_X1.csv, AQ_X2.csv)", value=True)
+uploaded_file_x1 = None
+uploaded_file_x2 = None
+if data_source == "📤 Upload file CSV":
+    uploaded_file_x1 = st.sidebar.file_uploader("Upload X1 (CSV)", type=['csv'], key='x1')
+    uploaded_file_x2 = st.sidebar.file_uploader("Upload X2 (CSV)", type=['csv'], key='x2')
 
 # Analysis options
 st.sidebar.markdown("---")
@@ -81,31 +87,107 @@ if 'cca_fitted' not in st.session_state:
 
 # Main content
 try:
-    # Load data
-    if use_default:
+    # Load data based on source
+    if data_source == "📁 File mặc định (AQ_X1, AQ_X2)":
         try:
             X1 = read_csv("AQ_X1.csv")
             X2 = read_csv("AQ_X2.csv")
-            st.sidebar.success("✓ Default files loaded")
+            st.sidebar.success("✓ Đã dùng file mặc định")
         except Exception as e:
-            st.sidebar.error(f"✗ Error loading default files: {str(e)}")
-            st.info("Please upload your CSV files using the sidebar.")
+            st.sidebar.error(f"✗ Lỗi: {str(e)}")
+            st.info("Vui lòng chọn 'Upload file CSV' hoặc 'Nhập trực tiếp' và cung cấp dữ liệu.")
             st.stop()
-    else:
+    elif data_source == "📤 Upload file CSV":
         if uploaded_file_x1 is not None and uploaded_file_x2 is not None:
             X1 = pd.read_csv(uploaded_file_x1)
             X2 = pd.read_csv(uploaded_file_x2)
-            
-            # Clean data
             X1 = X1.loc[:, ~X1.columns.str.contains('^Unnamed')]
             X1 = X1.dropna(axis=1, how='all').dropna()
             X2 = X2.loc[:, ~X2.columns.str.contains('^Unnamed')]
             X2 = X2.dropna(axis=1, how='all').dropna()
-            
-            st.sidebar.success("✓ Files uploaded successfully")
+            st.sidebar.success("✓ Đã tải file lên")
         else:
-            st.info("👈 Please upload both X1 and X2 datasets using the sidebar, or check 'Use default files'.")
+            st.info("👈 Vui lòng upload cả hai file X1 và X2 trong sidebar.")
             st.stop()
+    else:
+        # ✏️ Nhập trực tiếp X, Y
+        st.subheader("✏️ Nhập trực tiếp hai tập X, Y")
+        input_mode = st.radio(
+            "Cách nhập",
+            ["📋 Sửa bảng trực tiếp", "📄 Dán từ Excel/CSV (paste)"],
+            horizontal=True,
+            key="input_mode"
+        )
+        
+        if input_mode == "📋 Sửa bảng trực tiếp":
+            st.caption("Chỉnh kích thước và điền số vào bảng. X và Y phải có cùng số dòng.")
+            c_rx, c_cx, c_cy = st.columns([1, 1, 1])
+            with c_rx:
+                n_samples = st.number_input("Số mẫu (số dòng)", min_value=2, max_value=500, value=5, key="n_samples")
+            with c_cx:
+                n_cols_x = st.number_input("Số cột tập X", min_value=1, max_value=50, value=3, key="n_cols_x")
+            with c_cy:
+                n_cols_y = st.number_input("Số cột tập Y", min_value=1, max_value=50, value=2, key="n_cols_y")
+            
+            col_x, col_y = st.columns(2)
+            with col_x:
+                st.write("**Tập X (X1)** — sửa trực tiếp trong bảng:")
+                default_x = pd.DataFrame(
+                    np.zeros((n_samples, n_cols_x)),
+                    columns=[f"X{i}" for i in range(n_cols_x)]
+                )
+                edited_x = st.data_editor(default_x, use_container_width=True, key="direct_df_x", num_rows="fixed")
+                X1 = edited_x.astype(float)
+            with col_y:
+                st.write("**Tập Y (X2)** — sửa trực tiếp trong bảng:")
+                default_y = pd.DataFrame(
+                    np.zeros((n_samples, n_cols_y)),
+                    columns=[f"Y{i}" for i in range(n_cols_y)]
+                )
+                edited_y = st.data_editor(default_y, use_container_width=True, key="direct_df_y", num_rows="fixed")
+                X2 = edited_y.astype(float)
+        else:
+            st.caption("Dán dữ liệu (mỗi dòng = 1 mẫu, các cột cách nhau bởi Tab hoặc dấu phẩy). Dán tập X xong rồi tập Y.")
+            raw_x = st.text_area(
+                "Tập X (X1) — mỗi dòng một mẫu, ví dụ: 1.2, 3, 4.5",
+                height=120,
+                placeholder="1, 2, 3\n4, 5, 6\n7, 8, 9",
+                key="paste_x"
+            )
+            raw_y = st.text_area(
+                "Tập Y (X2) — cùng số dòng với X",
+                height=120,
+                placeholder="10, 20\n30, 40\n50, 60",
+                key="paste_y"
+            )
+            if not raw_x.strip() or not raw_y.strip():
+                st.warning("Vui lòng dán cả hai tập X và Y.")
+                st.stop()
+            def parse_paste(text):
+                rows = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
+                data = []
+                for ln in rows:
+                    parts = ln.replace(",", " ").split()
+                    data.append([float(x) for x in parts])
+                if not data:
+                    return None
+                return pd.DataFrame(data, columns=[f"C{i}" for i in range(len(data[0]))])
+            X1 = parse_paste(raw_x)
+            X2 = parse_paste(raw_y)
+            if X1 is None or X2 is None:
+                st.error("Không đọc được số. Mỗi dòng phải là các số cách nhau bởi dấu phẩy hoặc space.")
+                st.stop()
+            if len(X1) != len(X2):
+                st.error(f"Số dòng không khớp: X có {len(X1)} dòng, Y có {len(X2)} dòng.")
+                st.stop()
+            X1.columns = [f"X{i}" for i in range(X1.shape[1])]
+            X2.columns = [f"Y{i}" for i in range(X2.shape[1])]
+        
+        if X1.isna().any().any() or X2.isna().any().any():
+            st.warning("⚠️ Bảng chứa ô trống; ô trống sẽ được thay bằng 0.")
+            X1 = X1.fillna(0)
+            X2 = X2.fillna(0)
+        st.success("✓ Dùng dữ liệu vừa nhập. Cuộn xuống để chọn số component và chạy CCA.")
     
     # Check data consistency
     if len(X1) != len(X2):
@@ -236,6 +318,71 @@ try:
             'R²': '{:.6f}',
             'Variance Explained %': '{:.2f}%'
         }), use_container_width=True)
+        
+        # ---- Step-by-step algorithm ----
+        st.markdown("---")
+        st.subheader("📐 Từng bước thuật toán CCA")
+        
+        def _df_mat(mat, index=None, columns=None):
+            return pd.DataFrame(mat, index=index, columns=columns)
+        
+        with st.expander("1️⃣ Center — centerX, centerY (trung bình mẫu)", expanded=True):
+            st.markdown("**centerX** = mean(X1), **centerY** = mean(X2). Dữ liệu sau khi trừ mean: X1_centered, X2_centered.")
+            c1, c2 = st.columns(2)
+            with c1:
+                center_x = pd.DataFrame(cca.X1_mean.reshape(1, -1), columns=cca.feature_names_X1, index=["centerX"])
+                st.dataframe(center_x.style.format("{:.6f}"), use_container_width=True)
+            with c2:
+                center_y = pd.DataFrame(cca.X2_mean.reshape(1, -1), columns=cca.feature_names_X2, index=["centerY"])
+                st.dataframe(center_y.style.format("{:.6f}"), use_container_width=True)
+            st.caption("Preview centered data (5 dòng đầu):")
+            st.dataframe(_df_mat(cca.X1_centered[:5], columns=cca.feature_names_X1).style.format("{:.4f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.X2_centered[:5], columns=cca.feature_names_X2).style.format("{:.4f}"), use_container_width=True)
+        
+        with st.expander("2️⃣ Ma trận hiệp phương sai — Sigma11, Sigma22, Sigma12"):
+            st.markdown("**Sigma11** = cov(X1), **Sigma22** = cov(X2), **Sigma12** = cross-cov(X1,X2).")
+            st.write("**Sigma11** (X1):")
+            st.dataframe(_df_mat(cca.Sigma11, cca.feature_names_X1, cca.feature_names_X1).style.format("{:.6f}"), use_container_width=True)
+            st.write("**Sigma22** (X2):")
+            st.dataframe(_df_mat(cca.Sigma22, cca.feature_names_X2, cca.feature_names_X2).style.format("{:.6f}"), use_container_width=True)
+            st.write("**Sigma12** (cross-covariance):")
+            st.dataframe(_df_mat(cca.Sigma12, cca.feature_names_X1, cca.feature_names_X2).style.format("{:.6f}"), use_container_width=True)
+        
+        with st.expander("3️⃣ Cholesky — U1, U2 (Sigma11 = U1ᵀU1, Sigma22 = U2ᵀU2)"):
+            st.markdown("Phân tích Cholesky (upper): **Sigma11 = U1ᵀ U1**, **Sigma22 = U2ᵀ U2**.")
+            st.write("**U1**:")
+            st.dataframe(_df_mat(cca.U1, cca.feature_names_X1, cca.feature_names_X1).style.format("{:.6f}"), use_container_width=True)
+            st.write("**U2**:")
+            st.dataframe(_df_mat(cca.U2, cca.feature_names_X2, cca.feature_names_X2).style.format("{:.6f}"), use_container_width=True)
+        
+        with st.expander("4️⃣ Ma trận K = (U1⁻¹)ᵀ Sigma12 (U2⁻¹)"):
+            st.markdown("**K** dùng cho SVD bước sau.")
+            st.dataframe(_df_mat(cca.K, cca.feature_names_X1, cca.feature_names_X2).style.format("{:.6f}"), use_container_width=True)
+        
+        with st.expander("5️⃣ SVD của K — U_hat, Λ (rho), V_hat"):
+            st.markdown("**K = U_hat · Λ · V_hatᵀ**. **ρ (rho)** = giá trị kỳ dị = canonical correlations.")
+            st.write("**U_hat** (trái):")
+            st.dataframe(_df_mat(cca.U_hat, cca.feature_names_X1, [f"CC{i+1}" for i in range(cca.n_components)]).style.format("{:.6f}"), use_container_width=True)
+            st.write("**ρ (Lambda)** — canonical correlations:")
+            st.dataframe(pd.DataFrame({"Component": [f"CC{i+1}" for i in range(cca.n_components)], "ρ": cca.canonical_correlations}).style.format({"ρ": "{:.6f}"}), use_container_width=True)
+            st.write("**V_hat** (phải):")
+            st.dataframe(_df_mat(cca.V_hat, cca.feature_names_X2, [f"CC{i+1}" for i in range(cca.n_components)]).style.format("{:.6f}"), use_container_width=True)
+        
+        with st.expander("6️⃣ Vectơ canonical — a (weights X1), b (weights X2)"):
+            st.markdown("**a = U1⁻¹ U_hat**, **b = U2⁻¹ V_hat**. Đây là trọng số canonical (canonical weights).")
+            st.write("**a** (x_weights):")
+            st.dataframe(_df_mat(cca.x_weights, cca.feature_names_X1, [f"CC{i+1}" for i in range(cca.n_components)]).style.format("{:.6f}"), use_container_width=True)
+            st.write("**b** (y_weights):")
+            st.dataframe(_df_mat(cca.y_weights, cca.feature_names_X2, [f"CC{i+1}" for i in range(cca.n_components)]).style.format("{:.6f}"), use_container_width=True)
+        
+        with st.expander("7️⃣ Canonical correlations ρ (p)"):
+            st.markdown("**ρ** = correlation giữa U_i và V_i (cặp canonical variate).")
+            rho_df = pd.DataFrame({
+                "Component": [f"CC{i+1}" for i in range(cca.n_components)],
+                "ρ (p)": cca.canonical_correlations,
+                "ρ²": cca.canonical_correlations ** 2,
+            })
+            st.dataframe(rho_df.style.format({"ρ (p)": "{:.6f}", "ρ²": "{:.6f}"}), use_container_width=True)
         
         # Visualizations
         st.markdown("---")

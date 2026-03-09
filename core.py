@@ -46,12 +46,17 @@ class CCA:
         self.X1_mean = None
         self.X2_mean = None
         
-        # Internal matrices
+        # Internal matrices (for step-by-step display)
+        self.X1_centered = None
+        self.X2_centered = None
         self.Sigma11 = None  # Covariance matrix of X1
         self.Sigma22 = None  # Covariance matrix of X2
         self.Sigma12 = None  # Cross-covariance matrix
-        self.U1 = None       # Cholesky factor for Sigma11
-        self.U2 = None       # Cholesky factor for Sigma22
+        self.U1 = None       # Cholesky factor for Sigma11 (upper)
+        self.U2 = None       # Cholesky factor for Sigma22 (upper)
+        self.K = None        # K = (U1^-1)^T * Sigma12 * (U2^-1)
+        self.U_hat = None    # SVD left singular vectors of K
+        self.V_hat = None    # SVD right singular vectors of K (columns)
         
     def fit(self, X1: np.ndarray, X2: np.ndarray) -> 'CCA':
         """
@@ -102,6 +107,8 @@ class CCA:
         # Center the data
         X1_centered = X1_array - self.X1_mean
         X2_centered = X2_array - self.X2_mean
+        self.X1_centered = X1_centered
+        self.X2_centered = X2_centered
         
         print("\n" + "="*70)
         print("ALGORITHM 1: CCA via Covariance Matrices")
@@ -133,7 +140,8 @@ class CCA:
         
         U1_inv = linalg.inv(self.U1)
         U2_inv = linalg.inv(self.U2)
-        K = U1_inv.T @ self.Sigma12 @ U2_inv
+        self.K = U1_inv.T @ self.Sigma12 @ U2_inv
+        K = self.K
         print(f"  K shape: {K.shape}")
         
         # Step 4: Singular Value Decomposition (SVD)
@@ -147,6 +155,8 @@ class CCA:
         U_hat = U_hat[:, :self.n_components]
         Lambda = Lambda[:self.n_components]
         V_hat = V_hat[:, :self.n_components]
+        self.U_hat = U_hat
+        self.V_hat = V_hat
         
         print(f"  U_hat shape: {U_hat.shape}")
         print(f"  Lambda shape: {Lambda.shape}")
