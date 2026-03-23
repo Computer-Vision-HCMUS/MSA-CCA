@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>CCA Geometry – Data Points Overlay</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,500;1,400&display=swap');
+
+  :root {
+    --bg: #f7f5f0;
+    --ink: #1a1a1a;
+    --green: #2ca84a;
+    --blue: #2c4bd6;
+    --red: #d7191c;
+    --panel: #ffffff;
+    --border: #1a1a1a;
+    --muted: #888;
+    --tag-bg: #1a1a1a;
+    --tag-fg: #f7f5f0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 2px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    background: var(--panel);
+  }
+  header h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.5px; }
+  header .sub { font-size: 0.82rem; color: var(--muted); font-style: italic; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    flex: 1;
+  }
+
+  .sidebar {
+    border-right: 2px solid var(--border);
+    background: var(--panel);
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    overflow-y: auto;
+  }
+
+  .sidebar label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .sidebar textarea {
+    width: 100%;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    border: 1.5px solid #ccc;
+    padding: 8px 9px;
+    background: var(--bg);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 100px;
+  }
+  .sidebar textarea:focus { border-color: var(--ink); }
+
+  .hint {
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .btn {
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    padding: 9px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #333; }
+  .btn.secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    margin-top: 4px;
+  }
+  .btn.secondary:hover { background: #eee; }
+
+  .stat-box {
+    background: var(--bg);
+    border: 1.5px solid #ddd;
+    padding: 10px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.7;
+  }
+  .stat-box .r-val { color: var(--red); font-weight: 600; }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--red); }
+  .slider-row span { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; min-width: 45px; }
+
+  .canvas-area {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: auto;
+  }
+
+  canvas {
+    background: white;
+    border: 2px solid var(--border);
+    display: block;
+    max-width: 100%;
+  }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block;
+  }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 0.75rem;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 6px 0;
+  }
+
+  .section-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CCA Geometry Visualization</h1>
+  <span class="sub">Hiển thị tọa độ dataset lên không gian hình học canonical</span>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div>
+      <div class="section-title">Dataset X (plane x)</div>
+      <br>
+      <label>Nhập dữ liệu X (mỗi dòng = 1 quan sát)</label>
+      <textarea id="dataX" rows="7" placeholder="1.2, 0.8&#10;2.1, 1.5&#10;0.5, 2.0&#10;3.0, 1.1&#10;1.8, 2.3&#10;2.5, 0.9&#10;0.9, 1.7&#10;3.2, 2.1"></textarea>
+      <div class="hint">Mỗi dòng: x₁, x₂ (tab hoặc dấu phẩy)</div>
+    </div>
+    <div>
+      <div class="section-title">Dataset Y (plane y)</div>
+      <br>
+      <label>Nhập dữ liệu Y</label>
+      <textarea id="dataY" rows="7" placeholder="1.1, 0.9&#10;2.0, 1.6&#10;0.6, 1.9&#10;2.9, 1.2&#10;1.7, 2.4&#10;2.4, 1.0&#10;1.0, 1.6&#10;3.1, 2.0"></textarea>
+      <div class="hint">Số dòng X = số dòng Y</div>
+    </div>
+    <div>
+      <label>Hiển thị component CCA thứ</label>
+      <div class="slider-row">
+        <input type="range" id="compSlider" min="1" max="2" value="1" step="1">
+        <span id="compLabel">CC1</span>
+      </div>
+    </div>
+    <div>
+      <label>Cỡ điểm</label>
+      <div class="slider-row">
+        <input type="range" id="ptSize" min="2" max="12" value="5" step="1">
+        <span id="ptSizeLabel">5</span>
+      </div>
+    </div>
+    <div>
+      <label>Opacity điểm</label>
+      <div class="slider-row">
+        <input type="range" id="ptAlpha" min="20" max="100" value="75" step="5">
+        <span id="ptAlphaLabel">75%</span>
+      </div>
+    </div>
+
+    <button class="btn" onclick="run()">▶ Vẽ biểu đồ</button>
+    <button class="btn secondary" onclick="loadDemo()">⟳ Demo data</button>
+
+    <div id="statBox" class="stat-box" style="display:none"></div>
+    <div id="errMsg" class="error-msg"></div>
+  </div>
+
+  <div class="canvas-area">
+    <canvas id="cvs" width="900" height="500"></canvas>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#2ca84a"></span> y₁, y₂ (basis Y)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#2c4bd6"></span> x₁, x₂ (basis X)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#d7191c"></span> vᵧ, vₓ (canonical vectors)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e97f0a"></span> Điểm Y projected</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#8b2fc9"></span> Điểm X projected</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== MATH HELPERS =====================
+
+function parseMatrix(txt) {
+  return txt.trim().split('\n').filter(l => l.trim()).map(line =>
+    line.trim().split(/[\t,;]+/).map(Number)
+  );
+}
+
+function colMean(M) {
+  const n = M.length, p = M[0].length;
+  return Array.from({length:p}, (_,j) => M.reduce((s,r)=>s+r[j],0)/n);
+}
+
+function center(M) {
+  const mu = colMean(M);
+  return M.map(row => row.map((v,j) => v - mu[j]));
+}
+
+function matMul(A, B) {
+  const m=A.length, n=B[0].length, k=B.length;
+  return Array.from({length:m},(_,i)=>Array.from({length:n},(_,j)=>
+    Array.from({length:k},(_,l)=>A[i][l]*B[l][j]).reduce((a,b)=>a+b,0)));
+}
+
+function transpose(M) {
+  return M[0].map((_,j)=>M.map(r=>r[j]));
+}
+
+function covMatrix(A, B) {
+  const n = A.length;
+  return matMul(transpose(A), B).map(row => row.map(v => v/n));
+}
+
+// Simple SVD via power iteration for 2x2 or via eigendecomposition
+function eig2x2sym(S) {
+  // Returns {values, vectors} for 2x2 symmetric
+  const a=S[0][0], b=S[0][1], d=S[1][1];
+  const tr=a+d, det=a*d-b*b;
+  const disc=Math.sqrt(Math.max(0,(tr*tr/4)-det));
+  const l1=tr/2+disc, l2=tr/2-disc;
+  function evec(lam) {
+    if(Math.abs(b)>1e-10) return norm2([lam-d, b]);
+    if(Math.abs(a-lam)<Math.abs(d-lam)) return [1,0];
+    return [0,1];
+  }
+  return {values:[l1,l2], vectors:[evec(l1),evec(l2)]};
+}
+
+function norm2(v) { const n=Math.sqrt(v[0]*v[0]+v[1]*v[1]); return n>1e-15?[v[0]/n,v[1]/n]:v; }
+
+function cca2d(X, Y) {
+  const Xc = center(X), Yc = center(Y);
+  const Sxx = covMatrix(Xc, Xc);
+  const Syy = covMatrix(Yc, Yc);
+  const Sxy = covMatrix(Xc, Yc);
+  const Syx = transpose(Sxy);
+
+  // Regularize
+  const eps = 1e-6;
+  Sxx[0][0]+=eps; Sxx[1][1]+=eps;
+  Syy[0][0]+=eps; Syy[1][1]+=eps;
+
+  // Chol-like inverse for 2x2 positive definite
+  function inv2(M) {
+    const det = M[0][0]*M[1][1] - M[0][1]*M[1][0];
+    if(Math.abs(det)<1e-14) return [[1,0],[0,1]];
+    const d = 1/det;
+    return [[M[1][1]*d, -M[0][1]*d],[-M[1][0]*d, M[0][0]*d]];
+  }
+
+  function sqrtInv2(M) {
+    const {values,vectors} = eig2x2sym(M);
+    const s = vectors.map(v=>v);
+    const d0 = 1/Math.sqrt(Math.max(values[0],1e-10));
+    const d1 = 1/Math.sqrt(Math.max(values[1],1e-10));
+    // S^{-1/2} = V diag(d) V^T
+    const Vt = transpose(s);
+    const DV = s.map((row,i)=>row.map(v=>v*(i===0?d0:d1)));
+    return matMul(Vt, DV);
+  }
+
+  const SxxSqrtInv = sqrtInv2(Sxx);
+  const SyySqrtInv = sqrtInv2(Syy);
+
+  // K = Sxx^{-1/2} Sxy Syy^{-1/2}
+  const K = matMul(matMul(SxxSqrtInv, Sxy), SyySqrtInv);
+  // SVD of K (2x2): use KK^T eig
+  const KKt = matMul(K, transpose(K));
+  const {values:sv2, vectors:Uvecs} = eig2x2sym(KKt);
+  const sigma = sv2.map(v=>Math.sqrt(Math.max(v,0)));
+
+  // Sort descending
+  const idx = sigma[0]>=sigma[1] ? [0,1] : [1,0];
+  const sigmaSort = idx.map(i=>sigma[i]);
+  const Usort = idx.map(i=>Uvecs[i]);
+
+  // V = Syy^{-1/2} K^T U / sigma
+  const KT = transpose(K);
+  const Vsort = idx.map((ci,i) => {
+    const s_ = sigmaSort[i];
+    if(s_<1e-10) return norm2([1,0]);
+    const u = Usort[ci===0?0:1];
+    // Kt u
+    const ktU = [KT[0][0]*u[0]+KT[0][1]*u[1], KT[1][0]*u[0]+KT[1][1]*u[1]];
+    const tmp = [SyySqrtInv[0][0]*ktU[0]+SyySqrtInv[0][1]*ktU[1],
+                 SyySqrtInv[1][0]*ktU[0]+SyySqrtInv[1][1]*ktU[1]];
+    return norm2([tmp[0]/s_, tmp[1]/s_]);
+  });
+
+  // wx = Sxx^{-1/2} U
+  const Wx = idx.map((ci) => {
+    const u = Uvecs[ci];
+    return norm2([SxxSqrtInv[0][0]*u[0]+SxxSqrtInv[0][1]*u[1],
+                  SxxSqrtInv[1][0]*u[0]+SxxSqrtInv[1][1]*u[1]]);
+  });
+  const Wy = Vsort;
+
+  // Scores
+  const xScores = Xc.map(row => Wx.map(w => row[0]*w[0]+row[1]*w[1]));
+  const yScores = Yc.map(row => Wy.map(w => row[0]*w[0]+row[1]*w[1]));
+
+  const r = sigmaSort.map((s,i)=>{
+    const u1 = xScores.map(r=>r[i]), v1 = yScores.map(r=>r[i]);
+    const n = u1.length;
+    const mu=u1.reduce((a,b)=>a+b)/n, mv=v1.reduce((a,b)=>a+b)/n;
+    const su=Math.sqrt(u1.reduce((s,v)=>s+(v-mu)**2,0)/n)+1e-15;
+    const sv_=Math.sqrt(v1.reduce((s,v)=>s+(v-mv)**2,0)/n)+1e-15;
+    return u1.reduce((s,v,j)=>s+(v-mu)*(v1[j]-mv),0)/(n*su*sv_);
+  });
+
+  return { r, xWeights: Wx, yWeights: Wy, xScores, yScores, Xc, Yc };
+}
+
+// ===================== CANVAS DRAWING =====================
+
+const CANVAS_W = 900, CANVAS_H = 500;
+
+function hexAlpha(hex, alpha) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function arrow(ctx, x1,y1,x2,y2,color,lw=2.5,hw=9) {
+  const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+  if(len<1) return;
+  const ux=dx/len, uy=dy/len;
+  const hx=x2-ux*hw, hy=y2-uy*hw;
+  ctx.save();
+  ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(hx,hy); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(hx-uy*hw*0.4, hy+ux*hw*0.4);
+  ctx.lineTo(hx+uy*hw*0.4, hy-ux*hw*0.4);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawPlane(ctx, cx, cy, label, borderColor) {
+  const W=140, H=160;
+  // Skewed parallelogram
+  const pts = [
+    [cx-60, cy+80], [cx+80, cy+80],
+    [cx+100, cy-80], [cx-40, cy-80]
+  ];
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(...pts[0]);
+  pts.slice(1).forEach(p=>ctx.lineTo(...p));
+  ctx.closePath();
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.fill();
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2.5;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.font='italic 500 18px "IBM Plex Sans", serif';
+  ctx.fillStyle='#1a1a1a';
+  ctx.textAlign='center';
+  ctx.fillText(label, cx+20, cy-92);
+  ctx.restore();
+}
+
+function toCanvas(sx, sy, ox, oy, scale=55) {
+  return [ox + sx*scale, oy - sy*scale];
+}
+
+function drawScene(result, comp, ptSize, ptAlpha) {
+  const cvs = document.getElementById('cvs');
+  const ctx = cvs.getContext('2d');
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Background
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+  // Grid lines subtle
+  ctx.strokeStyle='#f0ede8'; ctx.lineWidth=1;
+  for(let i=0;i<CANVAS_W;i+=30){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,CANVAS_H);ctx.stroke();}
+  for(let i=0;i<CANVAS_H;i+=30){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(CANVAS_W,i);ctx.stroke();}
+
+  const {r, xWeights, yWeights, xScores, yScores, Xc, Yc} = result;
+  const k = comp; // 0-indexed
+
+  const rk = Math.max(-1, Math.min(1, r[k]));
+  const phi = Math.acos(rk);
+
+  // === PLANE Y (left) ===
+  const OY = [210, 300];
+  drawPlane(ctx, OY[0], OY[1], 'plane y', '#2ca84a');
+
+  // y basis arrows
+  const sc=55;
+  const y1=[0.85, 0.55], y2=[-0.35, 0.95];
+  const vy_dir = norm2(yWeights[k]);
+  const vy = [vy_dir[0]*1.6, vy_dir[1]*1.6];
+
+  const OY_c = [OY[0]-10, OY[1]+40];
+
+  function yPt(v) { return [OY_c[0]+v[0]*sc, OY_c[1]-v[1]*sc]; }
+
+  arrow(ctx, ...OY_c, ...yPt(y1), '#2ca84a', 2.5);
+  arrow(ctx, ...OY_c, ...yPt(y2), '#2ca84a', 2.5);
+  arrow(ctx, ...OY_c, ...yPt(vy), '#d7191c', 3.2);
+
+  ctx.font='bold 14px "IBM Plex Mono"'; ctx.textAlign='center';
+  ctx.fillStyle='#2ca84a';
+  ctx.fillText('y₁', OY_c[0]+y1[0]*sc+12, OY_c[1]-y1[1]*sc-5);
+  ctx.fillText('y₂', OY_c[0]+y2[0]*sc-12, OY_c[1]-y2[1]*sc-5);
+  ctx.font='bold 17px "IBM Plex Mono"'; ctx.fillStyle='#d7191c';
+  ctx.fillText('vᵧ', OY_c[0]+vy[0]*sc-14, OY_c[1]-vy[1]*sc-8);
+
+  // DATA POINTS Y — project onto plane
+  const yS = yScores.map(row => row[k]);
+  const orthoY = norm2([-vy_dir[1], vy_dir[0]]);
+  const scale2 = 0.45;
+
+  yScores.forEach((scores, i) => {
+    const s1 = yScores[i][k] * 0.28;
+    const s2 = (i % 3 - 1) * 0.18 * scale2;
+    const px = OY_c[0] + (vy_dir[0]*s1 + orthoY[0]*s2)*sc;
+    const py = OY_c[1] - (vy_dir[1]*s1 + orthoY[1]*s2)*sc;
+    ctx.beginPath();
+    ctx.arc(px, py, ptSize, 0, Math.PI*2);
+    ctx.fillStyle = hexAlpha('#e97f0a', ptAlpha/100);
+    ctx.fill();
+    ctx.strokeStyle = hexAlpha('#c06000', 0.8);
+    ctx.lineWidth = 0.8; ctx.stroke();
+    // label
+    ctx.font='10px "IBM Plex Mono"';
+    ctx.fillStyle='#7a4000';
+    ctx.textAlign='left';
+    ctx.fillText(`p${i+1}`, px+ptSize+1, py+3);
+  });
+
+  // === PLANE X (middle) ===
+  const OX = [530, 300];
+  drawPlane(ctx, OX[0], OX[1], 'plane x', '#2c4bd6');
+
+  const x1=[0.9, 0.45], x2=[-0.25, 0.9];
+  const vx_dir = norm2(xWeights[k]);
+  const vx = [vx_dir[0]*1.6, vx_dir[1]*1.6];
+  const OX_c = [OX[0]-5, OX[1]+40];
+
+  function xPt(v) { return [OX_c[0]+v[0]*sc, OX_c[1]-v[1]*sc]; }
+
+  arrow(ctx, ...OX_c, ...xPt(x1), '#2c4bd6', 2.5);
+  arrow(ctx, ...OX_c, ...xPt(x2), '#2c4bd6', 2.5);
+  arrow(ctx, ...OX_c, ...xPt(vx), '#d7191c', 3.2);
+
+  ctx.font='bold 14px "IBM Plex Mono"'; ctx.textAlign='center';
+  ctx.fillStyle='#2c4bd6';
+  ctx.fillText('x₁', OX_c[0]+x1[0]*sc+12, OX_c[1]-x1[1]*sc-5);
+  ctx.fillText('x₂', OX_c[0]+x2[0]*sc-10, OX_c[1]-x2[1]*sc-5);
+  ctx.font='bold 17px "IBM Plex Mono"'; ctx.fillStyle='#d7191c';
+  ctx.fillText('vₓ', OX_c[0]+vx[0]*sc+14, OX_c[1]-vx[1]*sc-8);
+
+  // DATA POINTS X
+  const orthoX = norm2([-vx_dir[1], vx_dir[0]]);
+  xScores.forEach((scores, i) => {
+    const s1 = xScores[i][k] * 0.28;
+    const s2 = (i % 3 - 1) * 0.18 * scale2;
+    const px = OX_c[0] + (vx_dir[0]*s1 + orthoX[0]*s2)*sc;
+    const py = OX_c[1] - (vx_dir[1]*s1 + orthoX[1]*s2)*sc;
+    ctx.beginPath();
+    ctx.arc(px, py, ptSize, 0, Math.PI*2);
+    ctx.fillStyle = hexAlpha('#8b2fc9', ptAlpha/100);
+    ctx.fill();
+    ctx.strokeStyle = hexAlpha('#5a1a99', 0.8);
+    ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.font='10px "IBM Plex Mono"';
+    ctx.fillStyle='#3d1060';
+    ctx.textAlign='left';
+    ctx.fillText(`p${i+1}`, px+ptSize+1, py+3);
+  });
+
+  // === CONNECTION e ===
+  const vy_tip = [OY_c[0]+vy[0]*sc, OY_c[1]-vy[1]*sc];
+  const vx_tip = [OX_c[0]+vx[0]*sc, OX_c[1]-vx[1]*sc];
+
+  ctx.save();
+  ctx.setLineDash([6,4]);
+  ctx.strokeStyle='#d7191c'; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(...vy_tip); ctx.lineTo(...vx_tip);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  const eMid = [(vy_tip[0]+vx_tip[0])/2, (vy_tip[1]+vx_tip[1])/2];
+  ctx.font='bold 15px "IBM Plex Mono"';
+  ctx.fillStyle='#d7191c'; ctx.textAlign='center';
+  ctx.fillText('e', eMid[0], eMid[1]-10);
+
+  // === ANGLE PANEL (right) ===
+  const O_tri = [800, 295];
+  const Ltri = 90;
+  const dvy = [-Math.sin(phi/2), -Math.cos(phi/2)];
+  const dvx = [Math.sin(phi/2), -Math.cos(phi/2)];
+  const T_vy = [O_tri[0]+dvy[0]*Ltri, O_tri[1]+dvy[1]*Ltri];
+  const T_vx = [O_tri[0]+dvx[0]*Ltri, O_tri[1]+dvx[1]*Ltri];
+
+  arrow(ctx, ...O_tri, ...T_vy, '#d7191c', 3);
+  arrow(ctx, ...O_tri, ...T_vx, '#d7191c', 3);
+
+  // e segment
+  ctx.save();
+  ctx.strokeStyle='#d7191c'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(...T_vy); ctx.lineTo(...T_vx); ctx.stroke();
+  ctx.restore();
+  ctx.font='bold 14px "IBM Plex Mono"';
+  ctx.fillStyle='#d7191c'; ctx.textAlign='center';
+  ctx.fillText('e', (T_vy[0]+T_vx[0])/2, Math.min(T_vy[1],T_vx[1])-6);
+
+  // arc
+  ctx.save();
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1.5;
+  const arcR=28;
+  const a0 = Math.atan2(dvy[1],dvy[0]);
+  const a1 = Math.atan2(dvx[1],dvx[0]);
+  ctx.beginPath(); ctx.arc(O_tri[0], O_tri[1], arcR, a0, a1); ctx.stroke();
+  ctx.restore();
+  ctx.font='14px "IBM Plex Mono"'; ctx.fillStyle='#1a1a1a'; ctx.textAlign='center';
+  ctx.fillText('φ', O_tri[0], O_tri[1]-arcR-3);
+
+  ctx.font='bold 15px "IBM Plex Mono"'; ctx.fillStyle='#d7191c';
+  ctx.fillText('vᵧ', T_vy[0]-12, T_vy[1]-6);
+  ctx.fillText('vₓ', T_vx[0]+14, T_vx[1]-6);
+
+  // stats bottom
+  const e_len = Math.sqrt(2-2*rk);
+  ctx.font='11px "IBM Plex Mono"'; ctx.fillStyle='#555'; ctx.textAlign='center';
+  ctx.fillText(`CC${k+1}: r = ${rk.toFixed(4)},  φ = arccos(r) ≈ ${(phi*180/Math.PI).toFixed(1)}°,  ‖e‖ = ${e_len.toFixed(3)}`, CANVAS_W/2, CANVAS_H-14);
+}
+
+// ===================== DEMO DATA =====================
+const DEMO_X = `1.2, 0.8
+2.1, 1.5
+0.5, 2.0
+3.0, 1.1
+1.8, 2.3
+2.5, 0.9
+0.9, 1.7
+3.2, 2.1
+1.5, 1.2
+2.8, 1.8`;
+
+const DEMO_Y = `1.1, 0.9
+2.0, 1.6
+0.6, 1.9
+2.9, 1.2
+1.7, 2.4
+2.4, 1.0
+1.0, 1.6
+3.1, 2.0
+1.4, 1.3
+2.7, 1.9`;
+
+function loadDemo() {
+  document.getElementById('dataX').value = DEMO_X;
+  document.getElementById('dataY').value = DEMO_Y;
+  run();
+}
+
+// ===================== MAIN =====================
+let lastResult = null;
+
+function run() {
+  document.getElementById('errMsg').textContent='';
+  try {
+    const X = parseMatrix(document.getElementById('dataX').value);
+    const Y = parseMatrix(document.getElementById('dataY').value);
+
+    if(X.length !== Y.length) throw new Error(`Số dòng X (${X.length}) ≠ Y (${Y.length})`);
+    if(X[0].length !== 2) throw new Error('X phải có đúng 2 cột');
+    if(Y[0].length !== 2) throw new Error('Y phải có đúng 2 cột');
+    if(X.length < 4) throw new Error('Cần ít nhất 4 quan sát');
+
+    const result = cca2d(X, Y);
+    lastResult = result;
+
+    const comp = parseInt(document.getElementById('compSlider').value)-1;
+    const ptSize = parseInt(document.getElementById('ptSize').value);
+    const ptAlpha = parseInt(document.getElementById('ptAlpha').value);
+
+    drawScene(result, comp, ptSize, ptAlpha);
+
+    const sb = document.getElementById('statBox');
+    sb.style.display='block';
+    sb.innerHTML = result.r.map((ri,i)=>{
+      const phi=Math.acos(Math.max(-1,Math.min(1,ri)));
+      return `<span class="r-val">CC${i+1}</span>: r = ${ri.toFixed(4)}, φ = ${(phi*180/Math.PI).toFixed(1)}°, e = ${Math.sqrt(2-2*ri).toFixed(3)}`;
+    }).join('<br>');
+  } catch(e) {
+    document.getElementById('errMsg').textContent = '⚠ ' + e.message;
+  }
+}
+
+// Controls
+document.getElementById('compSlider').addEventListener('input', function() {
+  document.getElementById('compLabel').textContent = 'CC'+this.value;
+  if(lastResult) {
+    const ptSize=parseInt(document.getElementById('ptSize').value);
+    const ptAlpha=parseInt(document.getElementById('ptAlpha').value);
+    drawScene(lastResult, parseInt(this.value)-1, ptSize, ptAlpha);
+  }
+});
+document.getElementById('ptSize').addEventListener('input', function() {
+  document.getElementById('ptSizeLabel').textContent=this.value;
+  if(lastResult){const c=parseInt(document.getElementById('compSlider').value)-1;drawScene(lastResult,c,parseInt(this.value),parseInt(document.getElementById('ptAlpha').value));}
+});
+document.getElementById('ptAlpha').addEventListener('input', function() {
+  document.getElementById('ptAlphaLabel').textContent=this.value+'%';
+  if(lastResult){const c=parseInt(document.getElementById('compSlider').value)-1;drawScene(lastResult,c,parseInt(document.getElementById('ptSize').value),parseInt(this.value));}
+});
+
+// Init
+window.addEventListener('load', loadDemo);
+</script>
+</body>
+</html>
