@@ -16,6 +16,7 @@ This project provides a complete toolkit for performing Canonical Correlation An
 - **Adaptive Visualization**: Rich visualizations that scale with the number of components
 - **Export Results**: Save canonical correlations, weights, loadings, and variates
 - **General Purpose**: Works with any paired datasets, not limited to specific examples
+- **Geometry plot (data-driven)**: `plot_cca_variable_spaces_canonical()` draws two variable “planes” (2D projections of columns in sample space ℝⁿ) plus **V_x**, **V_y**, and a panel with **φ**, **e** between unit canonical directions — works for any input shapes after CCA is fitted
 
 ## Project Structure
 
@@ -26,6 +27,7 @@ MSA-CCA/
 ├── core.py            # CCA implementation using sklearn
 ├── main.py            # Command-line interface for CCA
 ├── demo_app.py        # Streamlit web application
+├── geometry_cca/      # Geometric explanations & plots (variable-space diagram, φ, e)
 ├── requirements.txt   # Python dependencies
 ├── .env.example       # Environment configuration template (optional)
 ├── AQ_X1.csv         # Sample dataset 1 (Temperature, Humidity, etc.)
