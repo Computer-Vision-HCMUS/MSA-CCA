@@ -10,7 +10,8 @@ CCA Geometry Visualization (Textbook Style)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
+from matplotlib.patches import Polygon, Circle
+from matplotlib.colors import to_rgba
 from typing import TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
@@ -368,6 +369,256 @@ def plot_cca_variable_spaces_canonical(
     ax.set_ylim(0.0, 5.8)
     ax.set_aspect("equal", adjustable="box")
     ax.axis("off")
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_cca_variable_spaces_canonical(
+    cca: "CCA",
+    component: int = 0,
+    ix: Tuple[int, int] = (0, 1),
+    iy: Tuple[int, int] = (0, 1),
+    figsize: Tuple[float, float] = (14, 5.2),
+    language: str = "vi",
+) -> plt.Figure:
+    """
+    Canvas-like textbook diagram matching `MSA-theory/.cursor/skills/geo.html`.
+
+    Notes:
+    - Conceptual axes are drawn in a fixed 2D canvas coordinate system (x: 0..900, y: 0..500).
+    - canonical directions v_x, v_y are derived from weights using selected 2D coordinates
+      (components ix=(ix0,ix1) and iy=(iy0,iy1)).
+    - Optionally overlays dataset points projected onto the visual planes (controlled
+      by attributes set in `demo_app.py`):
+        - cca._geo_show_points (bool, default True)
+        - cca._geo_pt_size (int, default 5)
+        - cca._geo_pt_alpha (int 0..100, default 75)
+    """
+    _ = language  # only affects text elsewhere
+
+    CANVAS_W, CANVAS_H = 900, 500
+    sc = 55.0
+    scale2 = 0.45
+    pt_size = int(getattr(cca, "_geo_pt_size", 5))
+    pt_alpha_pct = float(getattr(cca, "_geo_pt_alpha", 75))
+    pt_alpha = float(np.clip(pt_alpha_pct / 100.0, 0.0, 1.0))
+    show_points = bool(getattr(cca, "_geo_show_points", True))
+
+    k = int(component)
+    if k < 0 or k >= cca.n_components:
+        raise ValueError(f"component must be in [0, {cca.n_components - 1}]")
+
+    r = float(np.clip(cca.canonical_correlations[k], -1.0, 1.0))
+    phi = float(np.arccos(r))
+    e_len = float(np.sqrt(max(0.0, 2.0 - 2.0 * r)))
+
+    # ---- Canonical direction (2D) from weights using selected indices
+    def _norm2(v: np.ndarray) -> np.ndarray:
+        v = np.asarray(v, dtype=float).ravel()
+        n = float(np.linalg.norm(v))
+        if n < 1e-15:
+            return np.array([1.0, 0.0], dtype=float)
+        return v / n
+
+    ix0, ix1 = int(ix[0]), int(ix[1])
+    iy0, iy1 = int(iy[0]), int(iy[1])
+    ix0 = max(0, min(ix0, cca.x_weights.shape[0] - 1))
+    ix1 = max(0, min(ix1, cca.x_weights.shape[0] - 1))
+    iy0 = max(0, min(iy0, cca.y_weights.shape[0] - 1))
+    iy1 = max(0, min(iy1, cca.y_weights.shape[0] - 1))
+
+    vx_dir = _norm2(np.array([cca.x_weights[ix0, k], cca.x_weights[ix1, k]], dtype=float))
+    vy_dir = _norm2(np.array([cca.y_weights[iy0, k], cca.y_weights[iy1, k]], dtype=float))
+
+    vx = vx_dir * 1.6
+    vy = vy_dir * 1.6
+
+    # ---- Basis directions (fixed, like geo.html)
+    y1 = np.array([0.85, 0.55], dtype=float)
+    y2 = np.array([-0.35, 0.95], dtype=float)
+    x1 = np.array([0.9, 0.45], dtype=float)
+    x2 = np.array([-0.25, 0.9], dtype=float)
+
+    # ---- Canvas setup
+    fig, ax = plt.subplots(figsize=figsize)
+    fig.patch.set_facecolor("white")
+    ax.set_facecolor("white")
+    ax.set_xlim(0, CANVAS_W)
+    ax.set_ylim(CANVAS_H, 0)  # y-down like canvas
+    ax.set_aspect("equal", adjustable="box")
+    ax.axis("off")
+
+    red = "#d7191c"
+    green = "#2ca84a"
+    blue = "#2c4bd6"
+
+    def vec_tip(Oc: np.ndarray, v: np.ndarray) -> np.ndarray:
+        # In geo.html: yPt(v) = [Ox + v.x*sc, Oy - v.y*sc]
+        return np.array([Oc[0] + v[0] * sc, Oc[1] - v[1] * sc], dtype=float)
+
+    def draw_arrow(base: np.ndarray, tip: np.ndarray, color: str, lw: float, ms: float = 12) -> None:
+        ax.annotate(
+            "",
+            xy=(float(tip[0]), float(tip[1])),
+            xytext=(float(base[0]), float(base[1])),
+            arrowprops=dict(arrowstyle="->", color=color, lw=lw, mutation_scale=ms),
+            zorder=4,
+        )
+
+    def draw_plane(cx: float, cy: float, label: str) -> None:
+        # drawPlane() in geo.html
+        pts = np.array(
+            [
+                [cx - 60, cy + 80],
+                [cx + 80, cy + 80],
+                [cx + 100, cy - 80],
+                [cx - 40, cy - 80],
+            ],
+            dtype=float,
+        )
+        ax.add_patch(
+            Polygon(
+                pts,
+                closed=True,
+                facecolor=(1.0, 1.0, 1.0, 0.85),
+                edgecolor="#1a1a1a",
+                linewidth=2.5,
+                zorder=1,
+            )
+        )
+        ax.text(
+            cx + 20,
+            cy - 92,
+            label,
+            fontsize=18,
+            fontstyle="italic",
+            fontfamily="serif",
+            ha="center",
+            va="bottom",
+            color="#1a1a1a",
+        )
+
+    # ---- Coordinates (matching geo.html)
+    OY = np.array([210.0, 300.0], dtype=float)
+    OX = np.array([530.0, 300.0], dtype=float)
+    OY_c = np.array([OY[0] - 10, OY[1] + 40], dtype=float)
+    OX_c = np.array([OX[0] - 5, OX[1] + 40], dtype=float)
+    O_tri = np.array([800.0, 295.0], dtype=float)
+    L_tri = 90.0
+
+    # ===================== ZONE Y (left plane)
+    draw_plane(OY[0], OY[1], "plane y")
+
+    y1_tip = vec_tip(OY_c, y1)
+    y2_tip = vec_tip(OY_c, y2)
+    vy_tip = vec_tip(OY_c, vy)
+
+    draw_arrow(OY_c, y1_tip, green, lw=2.5, ms=14)
+    draw_arrow(OY_c, y2_tip, green, lw=2.5, ms=14)
+    draw_arrow(OY_c, vy_tip, red, lw=3.2, ms=16)
+
+    ax.text(y1_tip[0] + 12, y1_tip[1] - 5, r"$y_1$", fontsize=14, fontweight="bold", color=green)
+    ax.text(y2_tip[0] - 12, y2_tip[1] - 5, r"$y_2$", fontsize=14, fontweight="bold", color=green, ha="right")
+    ax.text(vy_tip[0] - 14, vy_tip[1] - 8, r"$v_y$", fontsize=17, fontweight="bold", color=red)
+
+    if show_points:
+        y_scores_k = np.asarray(cca.y_scores[:, k], dtype=float)
+        orthoY = _norm2(np.array([-vy_dir[1], vy_dir[0]], dtype=float))
+        for i, s in enumerate(y_scores_k):
+            s1 = s * 0.28
+            s2 = (i % 3 - 1) * 0.18 * scale2
+            px = OY_c[0] + (vy_dir[0] * s1 + orthoY[0] * s2) * sc
+            py = OY_c[1] - (vy_dir[1] * s1 + orthoY[1] * s2) * sc
+
+            face = to_rgba("#e97f0a", pt_alpha)
+            edge = to_rgba("#c06000", 0.8)
+            ax.add_patch(Circle((px, py), radius=pt_size, facecolor=face, edgecolor=edge, linewidth=0.8, zorder=2))
+            ax.text(px + pt_size + 1, py + 3, f"p{i+1}", fontsize=8, color="#7a4000", ha="left", va="center")
+
+    # ===================== ZONE X (middle plane)
+    draw_plane(OX[0], OX[1], "plane x")
+
+    x1_tip = vec_tip(OX_c, x1)
+    x2_tip = vec_tip(OX_c, x2)
+    vx_tip = vec_tip(OX_c, vx)
+
+    draw_arrow(OX_c, x1_tip, blue, lw=2.5, ms=14)
+    draw_arrow(OX_c, x2_tip, blue, lw=2.5, ms=14)
+    draw_arrow(OX_c, vx_tip, red, lw=3.2, ms=16)
+
+    ax.text(x1_tip[0] + 12, x1_tip[1] - 5, r"$x_1$", fontsize=14, fontweight="bold", color=blue)
+    ax.text(x2_tip[0] - 10, x2_tip[1] - 5, r"$x_2$", fontsize=14, fontweight="bold", color=blue, ha="right")
+    ax.text(vx_tip[0] + 14, vx_tip[1] - 8, r"$v_x$", fontsize=17, fontweight="bold", color=red)
+
+    if show_points:
+        x_scores_k = np.asarray(cca.x_scores[:, k], dtype=float)
+        orthoX = _norm2(np.array([-vx_dir[1], vx_dir[0]], dtype=float))
+        for i, s in enumerate(x_scores_k):
+            s1 = s * 0.28
+            s2 = (i % 3 - 1) * 0.18 * scale2
+            px = OX_c[0] + (vx_dir[0] * s1 + orthoX[0] * s2) * sc
+            py = OX_c[1] - (vx_dir[1] * s1 + orthoX[1] * s2) * sc
+
+            face = to_rgba("#8b2fc9", pt_alpha)
+            edge = to_rgba("#5a1a99", 0.8)
+            ax.add_patch(Circle((px, py), radius=pt_size, facecolor=face, edgecolor=edge, linewidth=0.8, zorder=2))
+            ax.text(px + pt_size + 1, py + 3, f"p{i+1}", fontsize=8, color="#3d1060", ha="left", va="center")
+
+    # ===================== CONNECTION e (dashed line)
+    e_mid = (vy_tip + vx_tip) / 2.0
+    ax.plot(
+        [vy_tip[0], vx_tip[0]],
+        [vy_tip[1], vx_tip[1]],
+        color=red,
+        linewidth=2,
+        linestyle=(0, (6, 4)),
+        zorder=3,
+    )
+    ax.text(e_mid[0], e_mid[1] - 10, "e", fontsize=15, fontweight="bold", color=red, ha="center", va="center")
+
+    # ===================== ZONE C (triangle)
+    dvy = np.array([-np.sin(phi / 2.0), -np.cos(phi / 2.0)], dtype=float)
+    dvx = np.array([np.sin(phi / 2.0), -np.cos(phi / 2.0)], dtype=float)
+    T_vy = O_tri + dvy * L_tri
+    T_vx = O_tri + dvx * L_tri
+
+    draw_arrow(O_tri, T_vy, red, lw=3.0, ms=16)
+    draw_arrow(O_tri, T_vx, red, lw=3.0, ms=16)
+    ax.plot([T_vy[0], T_vx[0]], [T_vy[1], T_vx[1]], color=red, linewidth=2, zorder=3)
+
+    ax.text(T_vy[0] - 12, T_vy[1] - 6, r"$v_y$", fontsize=15, fontweight="bold", color=red, ha="right", va="center")
+    ax.text(T_vx[0] + 14, T_vx[1] - 6, r"$v_x$", fontsize=15, fontweight="bold", color=red, ha="left", va="center")
+    ax.text((T_vy[0] + T_vx[0]) / 2.0, min(T_vy[1], T_vx[1]) - 6, "e", fontsize=14, fontweight="bold", color=red, ha="center", va="center")
+
+    # arc for phi
+    arcR = 28.0
+    a0 = float(np.arctan2(dvy[1], dvy[0]))
+    a1 = float(np.arctan2(dvx[1], dvx[0]))
+    if a1 < a0:
+        a1 += 2 * np.pi
+    arc_t = np.linspace(a0, a1, 60)
+    ax.plot(
+        O_tri[0] + arcR * np.cos(arc_t),
+        O_tri[1] + arcR * np.sin(arc_t),
+        color="#1a1a1a",
+        linewidth=1.5,
+        linestyle="--",
+        zorder=3,
+    )
+    ax.text(O_tri[0], O_tri[1] - arcR - 3, r"$\varphi$", fontsize=14, color="#1a1a1a", fontweight="bold", ha="center", va="center")
+
+    # bottom stats (like geo.html)
+    ax.text(
+        CANVAS_W / 2.0,
+        CANVAS_H - 14,
+        f"CC{k+1}: r = {r:.4f},  φ = arccos(r) ≈ {np.degrees(phi):.1f}°,  ‖e‖ = {e_len:.3f}",
+        fontsize=11,
+        color="#555",
+        ha="center",
+        va="bottom",
+        zorder=10,
+    )
 
     plt.tight_layout()
     return fig

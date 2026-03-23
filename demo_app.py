@@ -312,12 +312,11 @@ try:
             'Variance Explained %': (cca.canonical_correlations ** 2) / 
                                    np.sum(cca.canonical_correlations ** 2) * 100
         })
-        
-        st.dataframe(corr_df.style.format({
-            'Correlation': '{:.6f}',
-            'R²': '{:.6f}',
-            'Variance Explained %': '{:.2f}%'
-        }), use_container_width=True)
+
+        corr_df_show = corr_df.copy()
+        corr_df_show[['Correlation', 'R²']] = corr_df_show[['Correlation', 'R²']].round(6)
+        corr_df_show['Variance Explained %'] = corr_df_show['Variance Explained %'].round(2)
+        st.dataframe(corr_df_show, use_container_width=True)
         
         # ---- Step-by-step algorithm ----
         st.markdown("---")
@@ -331,49 +330,49 @@ try:
             c1, c2 = st.columns(2)
             with c1:
                 center_x = pd.DataFrame(cca.X1_mean.reshape(1, -1), columns=cca.feature_names_X1, index=["centerX"])
-                st.dataframe(center_x.style.format("{:.6f}"), use_container_width=True)
+                st.dataframe(center_x.round(6), use_container_width=True)
             with c2:
                 center_y = pd.DataFrame(cca.X2_mean.reshape(1, -1), columns=cca.feature_names_X2, index=["centerY"])
-                st.dataframe(center_y.style.format("{:.6f}"), use_container_width=True)
+                st.dataframe(center_y.round(6), use_container_width=True)
             st.caption("Preview centered data (5 dòng đầu):")
-            st.dataframe(_df_mat(cca.X1_centered[:5], columns=cca.feature_names_X1).style.format("{:.4f}"), use_container_width=True)
-            st.dataframe(_df_mat(cca.X2_centered[:5], columns=cca.feature_names_X2).style.format("{:.4f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.X1_centered[:5], columns=cca.feature_names_X1).round(4), use_container_width=True)
+            st.dataframe(_df_mat(cca.X2_centered[:5], columns=cca.feature_names_X2).round(4), use_container_width=True)
         
         with st.expander("2️⃣ Ma trận hiệp phương sai — Sigma11, Sigma22, Sigma12"):
             st.markdown("**Sigma11** = cov(X1), **Sigma22** = cov(X2), **Sigma12** = cross-cov(X1,X2).")
             st.write("**Sigma11** (X1):")
-            st.dataframe(_df_mat(cca.Sigma11, cca.feature_names_X1, cca.feature_names_X1).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.Sigma11, cca.feature_names_X1, cca.feature_names_X1).round(6), use_container_width=True)
             st.write("**Sigma22** (X2):")
-            st.dataframe(_df_mat(cca.Sigma22, cca.feature_names_X2, cca.feature_names_X2).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.Sigma22, cca.feature_names_X2, cca.feature_names_X2).round(6), use_container_width=True)
             st.write("**Sigma12** (cross-covariance):")
-            st.dataframe(_df_mat(cca.Sigma12, cca.feature_names_X1, cca.feature_names_X2).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.Sigma12, cca.feature_names_X1, cca.feature_names_X2).round(6), use_container_width=True)
         
         with st.expander("3️⃣ Cholesky — U1, U2 (Sigma11 = U1ᵀU1, Sigma22 = U2ᵀU2)"):
             st.markdown("Phân tích Cholesky (upper): **Sigma11 = U1ᵀ U1**, **Sigma22 = U2ᵀ U2**.")
             st.write("**U1**:")
-            st.dataframe(_df_mat(cca.U1, cca.feature_names_X1, cca.feature_names_X1).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.U1, cca.feature_names_X1, cca.feature_names_X1).round(6), use_container_width=True)
             st.write("**U2**:")
-            st.dataframe(_df_mat(cca.U2, cca.feature_names_X2, cca.feature_names_X2).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.U2, cca.feature_names_X2, cca.feature_names_X2).round(6), use_container_width=True)
         
         with st.expander("4️⃣ Ma trận K = (U1⁻¹)ᵀ Sigma12 (U2⁻¹)"):
             st.markdown("**K** dùng cho SVD bước sau.")
-            st.dataframe(_df_mat(cca.K, cca.feature_names_X1, cca.feature_names_X2).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.K, cca.feature_names_X1, cca.feature_names_X2).round(6), use_container_width=True)
         
         with st.expander("5️⃣ SVD của K — U_hat, Λ (rho), V_hat"):
             st.markdown("**K = U_hat · Λ · V_hatᵀ**. **ρ (rho)** = giá trị kỳ dị = canonical correlations.")
             st.write("**U_hat** (trái):")
-            st.dataframe(_df_mat(cca.U_hat, cca.feature_names_X1, [f"CC{i+1}" for i in range(cca.n_components)]).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.U_hat, cca.feature_names_X1, [f"CC{i+1}" for i in range(cca.n_components)]).round(6), use_container_width=True)
             st.write("**ρ (Lambda)** — canonical correlations:")
-            st.dataframe(pd.DataFrame({"Component": [f"CC{i+1}" for i in range(cca.n_components)], "ρ": cca.canonical_correlations}).style.format({"ρ": "{:.6f}"}), use_container_width=True)
+            st.dataframe(pd.DataFrame({"Component": [f"CC{i+1}" for i in range(cca.n_components)], "ρ": cca.canonical_correlations}).round(6), use_container_width=True)
             st.write("**V_hat** (phải):")
-            st.dataframe(_df_mat(cca.V_hat, cca.feature_names_X2, [f"CC{i+1}" for i in range(cca.n_components)]).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.V_hat, cca.feature_names_X2, [f"CC{i+1}" for i in range(cca.n_components)]).round(6), use_container_width=True)
         
         with st.expander("6️⃣ Vectơ canonical — a (weights X1), b (weights X2)"):
             st.markdown("**a = U1⁻¹ U_hat**, **b = U2⁻¹ V_hat**. Đây là trọng số canonical (canonical weights).")
             st.write("**a** (x_weights):")
-            st.dataframe(_df_mat(cca.x_weights, cca.feature_names_X1, [f"CC{i+1}" for i in range(cca.n_components)]).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.x_weights, cca.feature_names_X1, [f"CC{i+1}" for i in range(cca.n_components)]).round(6), use_container_width=True)
             st.write("**b** (y_weights):")
-            st.dataframe(_df_mat(cca.y_weights, cca.feature_names_X2, [f"CC{i+1}" for i in range(cca.n_components)]).style.format("{:.6f}"), use_container_width=True)
+            st.dataframe(_df_mat(cca.y_weights, cca.feature_names_X2, [f"CC{i+1}" for i in range(cca.n_components)]).round(6), use_container_width=True)
         
         with st.expander("7️⃣ Canonical correlations ρ (p)"):
             st.markdown("**ρ** = correlation giữa U_i và V_i (cặp canonical variate).")
@@ -382,7 +381,9 @@ try:
                 "ρ (p)": cca.canonical_correlations,
                 "ρ²": cca.canonical_correlations ** 2,
             })
-            st.dataframe(rho_df.style.format({"ρ (p)": "{:.6f}", "ρ²": "{:.6f}"}), use_container_width=True)
+            rho_df_show = rho_df.copy()
+            rho_df_show[["ρ (p)", "ρ²"]] = rho_df_show[["ρ (p)", "ρ²"]].round(6)
+            st.dataframe(rho_df_show, use_container_width=True)
         
         # Visualizations
         st.markdown("---")
@@ -462,7 +463,7 @@ try:
                     index=st.session_state.X1.columns,
                     columns=[f"CC{i+1}" for i in range(cca.n_components)]
                 )
-                st.dataframe(weights_x1.style.format('{:.4f}'), use_container_width=True)
+                st.dataframe(weights_x1.round(4), use_container_width=True)
                 
                 fig, ax = plt.subplots(figsize=(6, 5))
                 sns.heatmap(weights_x1, annot=True, fmt='.3f', cmap='RdBu_r', 
@@ -478,7 +479,7 @@ try:
                     index=st.session_state.X2.columns,
                     columns=[f"CC{i+1}" for i in range(cca.n_components)]
                 )
-                st.dataframe(weights_x2.style.format('{:.4f}'), use_container_width=True)
+                st.dataframe(weights_x2.round(4), use_container_width=True)
                 
                 fig, ax = plt.subplots(figsize=(6, 5))
                 sns.heatmap(weights_x2, annot=True, fmt='.3f', cmap='RdBu_r',
@@ -497,7 +498,7 @@ try:
                     index=st.session_state.X1.columns,
                     columns=[f"CC{i+1}" for i in range(cca.n_components)]
                 )
-                st.dataframe(loadings_x1.style.format('{:.4f}'), use_container_width=True)
+                st.dataframe(loadings_x1.round(4), use_container_width=True)
                 
                 fig, ax = plt.subplots(figsize=(6, 5))
                 sns.heatmap(loadings_x1, annot=True, fmt='.3f', cmap='RdBu_r',
@@ -513,7 +514,7 @@ try:
                     index=st.session_state.X2.columns,
                     columns=[f"CC{i+1}" for i in range(cca.n_components)]
                 )
-                st.dataframe(loadings_x2.style.format('{:.4f}'), use_container_width=True)
+                st.dataframe(loadings_x2.round(4), use_container_width=True)
                 
                 fig, ax = plt.subplots(figsize=(6, 5))
                 sns.heatmap(loadings_x2, annot=True, fmt='.3f', cmap='RdBu_r',
@@ -549,6 +550,15 @@ try:
                     iy0 = st.number_input("Y — cột 1", 0, max(0, py - 1), 0, key="geom_iy0")
                 with gy2:
                     iy1 = st.number_input("Y — cột 2", 0, max(0, py - 1), min(1, py - 1) if py > 1 else 0, key="geom_iy1")
+
+            # Controls for point overlay (like geo.html)
+            st.markdown("#### Overlay điểm dataset trên mặt phẳng")
+            show_points = st.checkbox("Hiển thị điểm", value=True)
+            pt_size = st.slider("Cỡ điểm", min_value=2, max_value=12, value=5, step=1)
+            pt_alpha = st.slider("Opacity điểm (%)", min_value=20, max_value=100, value=75, step=5)
+            cca._geo_show_points = bool(show_points)
+            cca._geo_pt_size = int(pt_size)
+            cca._geo_pt_alpha = float(pt_alpha)
             try:
                 fig_spaces = plot_cca_variable_spaces_canonical(
                     cca,
