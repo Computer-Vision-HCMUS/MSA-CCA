@@ -9,6 +9,7 @@ from .geometry import (
     get_canonical_angles_degrees,
     plot_correlation_angle,
     plot_geometry_schematic,
+    plot_cca_variable_spaces_canonical,
     plot_first_pair_scatter_with_angle,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "get_canonical_angles_degrees",
     "plot_correlation_angle",
     "plot_geometry_schematic",
+    "plot_cca_variable_spaces_canonical",
     "plot_first_pair_scatter_with_angle",
 ]

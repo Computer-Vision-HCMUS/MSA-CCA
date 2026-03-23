@@ -12,7 +12,7 @@ from core import CCA
 from geometry_cca import (
     get_geometry_description,
     plot_correlation_angle,
-    plot_geometry_schematic,
+    plot_cca_variable_spaces_canonical,
     plot_first_pair_scatter_with_angle,
 )
 import io
@@ -526,16 +526,47 @@ try:
             st.markdown("### Geometric meaning of CCA")
             st.markdown(get_geometry_description(cca, language="en"))
             st.markdown("---")
-            st.markdown("#### Illustrations")
-            col_geo1, col_geo2 = st.columns(2)
-            with col_geo1:
-                fig_r_angle = plot_correlation_angle(cca)
-                st.pyplot(fig_r_angle)
-                plt.close(fig_r_angle)
-            with col_geo2:
-                fig_schematic = plot_geometry_schematic()
-                st.pyplot(fig_schematic)
-                plt.close(fig_schematic)
+            st.markdown("#### Textbook-style geometry view")
+            st.caption(
+                "This figure is a conceptual schematic like the reference image: two skewed planes, basis vectors x1/x2 and y1/y2, "
+                "canonical directions v_x and v_y, the connector e between their tips, and the angle phi = arccos(r)."
+            )
+            px = int(cca.X1_centered.shape[1])
+            py = int(cca.X2_centered.shape[1])
+            with st.expander("Tùy chọn cặp CC & hai biến tạo “mặt phẳng”", expanded=False):
+                cc_idx = st.selectbox(
+                    "Cặp canonical",
+                    options=list(range(cca.n_components)),
+                    format_func=lambda i: f"CC{i+1} (r={cca.canonical_correlations[i]:.4f})",
+                    key="geom_cc_idx",
+                )
+                gx1, gx2, gy1, gy2 = st.columns(4)
+                with gx1:
+                    ix0 = st.number_input("X — cột 1", 0, max(0, px - 1), 0, key="geom_ix0")
+                with gx2:
+                    ix1 = st.number_input("X — cột 2", 0, max(0, px - 1), min(1, px - 1) if px > 1 else 0, key="geom_ix1")
+                with gy1:
+                    iy0 = st.number_input("Y — cột 1", 0, max(0, py - 1), 0, key="geom_iy0")
+                with gy2:
+                    iy1 = st.number_input("Y — cột 2", 0, max(0, py - 1), min(1, py - 1) if py > 1 else 0, key="geom_iy1")
+            try:
+                fig_spaces = plot_cca_variable_spaces_canonical(
+                    cca,
+                    component=int(cc_idx),
+                    ix=(int(ix0), int(ix1)),
+                    iy=(int(iy0), int(iy1)),
+                    language="vi",
+                )
+            except Exception as ex:
+                st.warning(str(ex))
+                fig_spaces = plot_cca_variable_spaces_canonical(cca, component=0, language="vi")
+            st.pyplot(fig_spaces)
+            plt.close(fig_spaces)
+            st.markdown("---")
+            st.markdown("#### Extra plots")
+            fig_r_angle = plot_correlation_angle(cca)
+            st.pyplot(fig_r_angle)
+            plt.close(fig_r_angle)
             st.markdown("**Scatter U₁ vs V₁ (CC1):** points close to the diagonal U=V correspond to high correlation (small angle θ).")
             fig_scatter_angle = plot_first_pair_scatter_with_angle(cca)
             st.pyplot(fig_scatter_angle)
