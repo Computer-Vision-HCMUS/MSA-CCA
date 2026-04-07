@@ -1,0 +1,111 @@
+\section{Method}
+Canonical correlation analysis originates in Hotelling (1936) and the two equations that govern the analysis are the following:
+\begin{equation} \label{eq:cca_final_b}
+    (\Sigma_{21} \Sigma_{11}^{-1} \Sigma_{12} - \rho^2 \Sigma_{22})\mathbf{b} = 0
+\end{equation}
+\begin{equation} \label{eq:cca_final_a}
+    (\Sigma_{12} \Sigma_{22}^{-1} \Sigma_{21} - \rho^2 \Sigma_{11})\mathbf{a} = 0
+\end{equation}
+where $\Sigma_{21} = \Sigma_{12}^T$. Both equations look similar and have, in fact, the same eigenvalues. And, given the eigenvectors for one of these equations, we can deduce the eigenvectors for the other as will be shown in the next section.
+
+\subsection{Derivation of the canonical correlation analysis equations}
+In canonical correlation analysis, we want to maximize correlations between objects that are represented with two data sets. Let us consider two groups of random variables:
+\begin{itemize}
+    \item Group 1: $\underset{1 \times p}{\mathbf{X}}^{(1)} = (X_1^{(1)}, X_2^{(1)}, \dots, X_p^{(1)})$
+    \item Group 2: $\underset{1 \times q}{\mathbf{X}}^{(2)} = (X_1^{(2)}, X_2^{(2)}, \dots, X_q^{(2)})$
+\end{itemize}
+Sometimes the data in $\mathbf{X}^{(2)}$ and $\mathbf{X}^{(1)}$ are called the dependent and the independent data, respectively. The maximum number of correlations that we can find is then equal to the minimum of the dimensions $p$ and $q$.
+
+Let the directions of optimal correlations for the $\mathbf{X}^{(1)}$ and $\mathbf{X}^{(2)}$ data sets be given by the coefficient vectors $\mathbf{a}$ and $\mathbf{b}$, respectively. We consider the linear combinations $U$ and $V$, defined as follows:
+\begin{equation} \label{eq:U_def}
+    \underset{1 \times 1}U =  \underset{1 \times p}{\mathbf{X}}^{(1)}\underset{p \times 1} {\mathbf{a}}
+\end{equation}
+\begin{equation} \label{eq:V_def}
+    \underset{1 \times 1}V =  \underset{1 \times q}{\mathbf{X}}^{(2)}\underset{q \times 1} {\mathbf{b}}
+\end{equation}
+
+The variables $U$ and $V$ are called the canonical variates. The correlation between them is defined as
+
+\begin{equation}
+\rho = \frac{\text{Cov}(U,V)}{\sqrt{\text{Var}(U)\text{Var}(V)}} .
+\end{equation}
+
+Since $U = X^{(1)}a$ and $V = X^{(2)}b$, we can express the covariance as
+
+\begin{equation}
+\text{Cov}(U,V) 
+= \text{Cov}( \mathbf{X}^{(1)} \mathbf{a},  \mathbf{X}^{(2)} \mathbf{b}) 
+= \underset{1 \times p}{\mathbf{a}^T} \, \underset{p \times q}{\text{Cov}(\mathbf{X}^{(1)}, \mathbf{X}^{(2)})} \, \underset{q \times 1}{\mathbf{b}}
+= \underset{1 \times p}{\mathbf{a}^T} \, \underset{p \times q}{\Sigma_{12}} \, \underset{q \times 1}{\mathbf{b}}
+\end{equation}
+Similarly, the variances of $U$ and $V$ are
+
+\begin{equation}
+\text{Var}(U) = \text{Var}(X^{(1)}a)
+= a^T \Sigma_{11} a
+\end{equation}
+
+\begin{equation}
+\text{Var}(V) = \text{Var}(X^{(2)}b)
+= b^T \Sigma_{22} b .
+\end{equation}
+
+Substituting these expressions into the definition of correlation yields
+
+\begin{equation} \label{eq:rho_formula}
+\rho =
+\frac{a^T \Sigma_{12} b}
+{\sqrt{a^T \Sigma_{11} a \; b^T \Sigma_{22} b}} .
+\end{equation}
+Our problem is now finding the directions $\mathbf{b}$ and $\mathbf{a}$ that maximize equation \eqref{eq:rho_formula} above.
+
+We first note that $\rho$ is not affected by a rescaling of $V$ or $U$. Since the choice of rescaling is arbitrary, we therefore maximize equation \eqref{eq:rho_formula} subject to the constraints:
+\begin{equation} \label{eq:const_u}
+    \text{Var}(U) = \underset{1 \times p}{\mathbf{a}^T} \underset{p \times p}{\Sigma_{11}} \underset{p \times 1}{\mathbf{a}} = 1
+\end{equation}
+\begin{equation} \label{eq:const_v}
+    \text{Var}(V) = \underset{1 \times q}{\mathbf{b}^T} \underset{q \times q}{\Sigma_{22}} \underset{q \times 1}{\mathbf{b}} = 1
+\end{equation}
+We have made the substitutions where the $\Sigma$'s are covariance matrices. We write the maximization problem in Lagrangian form:
+\begin{equation} \label{eq:lagrangian}
+    L(\rho_a, \rho_b, \mathbf{a}, \mathbf{b}) = \mathbf{b}^T \Sigma_{21} \mathbf{a} - \frac{\rho_a}{2}(\mathbf{a}^T \Sigma_{11} \mathbf{a} - 1) - \frac{\rho_b}{2}(\mathbf{b}^T \Sigma_{22} \mathbf{b} - 1)
+\end{equation}
+To solve equation \eqref{eq:lagrangian}, we take partial derivatives with respect to $\mathbf{a}$ and $\mathbf{b}$ and set them to zero:
+
+\begin{equation} \label{eq:deriv_a}
+    \frac{\partial L}{\partial \mathbf{a}} = (\mathbf{b}^T\Sigma_{21})^T - \frac{\rho_a}{2} (2 \Sigma_{11} \mathbf{a}) = \Sigma_{12} \mathbf{b} - \rho_a \Sigma_{11} \mathbf{a} = 0 \implies \underset{p \times q}{\Sigma_{12}} \underset{q \times 1}{\mathbf{b}} = \rho_a \underset{p \times p}{\Sigma_{11}} \underset{p \times 1}{\mathbf{a}}
+\end{equation}
+\begin{equation} \label{eq:deriv_b}
+    \frac{\partial L}{\partial \mathbf{b}} = \Sigma_{12}^T \mathbf{a} - \frac{\rho_b}{2} (2 \Sigma_{22} \mathbf{b}) = \Sigma_{21} \mathbf{a} - \rho_b \Sigma_{22} \mathbf{b} = 0 \implies \underset{q \times p}{\Sigma_{21}} \underset{p \times 1}{\mathbf{a}} - \rho_b \underset{q \times q}{\Sigma_{22}} \underset{q \times 1}{\mathbf{b}}
+\end{equation}
+
+
+
+
+To identify the relationship between the multipliers $\rho_a$ and $\rho_b$, we left-multiply \eqref{eq:deriv_a} by $\mathbf{a}^T$ and \eqref{eq:deriv_b} by $\mathbf{b}^T$:
+\begin{itemize}
+    \item From \eqref{eq:deriv_a}: $\mathbf{a}^T \Sigma_{12} \mathbf{b} = \rho_a (\mathbf{a}^T \Sigma_{11} \mathbf{a})$. Given the constraint \eqref{eq:const_u}, we have $\rho_a = \mathbf{a}^T \Sigma_{12} \mathbf{b}$.
+    \item From \eqref{eq:deriv_b}: $\mathbf{b}^T \Sigma_{21} \mathbf{a} = \rho_b (\mathbf{b}^T \Sigma_{22} \mathbf{b})$. Given the constraint \eqref{eq:const_v}, we have $\rho_b = \mathbf{b}^T \Sigma_{21} \mathbf{a}$.
+\end{itemize}
+Since $\mathbf{a}^T \Sigma_{12} \mathbf{b}$ is a scalar, it is equal to its transpose: $(\mathbf{a}^T \Sigma_{12} \mathbf{b})^T = \mathbf{b}^T \Sigma_{12}^T \mathbf{a} = \mathbf{b}^T \Sigma_{21} \mathbf{a}$. This implies that:
+\begin{equation} \label{eq:rho_equality}
+    \rho_a = \rho_b = \rho = \text{Cov}(U, V)
+\end{equation}
+Thus, the Lagrange multipliers are identical and equal to the canonical correlation we seek to maximize. Assuming $\Sigma_{11}$ is non-singular, we can rearrange \eqref{eq:deriv_a} to express $\mathbf{a}$ in terms of $\mathbf{b}$:
+\begin{equation} \label{eq:a_sol}
+\Sigma_{12} \mathbf{b} = \rho_a \Sigma_{11} \mathbf{a} \implies \mathbf{a} = \frac{\Sigma_{11}^{-1} \Sigma_{12} \mathbf{b}}{\rho}
+\end{equation}
+Substituting \eqref{eq:a_sol} into \eqref{eq:deriv_b} yields the generalized eigenvalue problem for $\mathbf{b}$:
+\begin{equation} \label{eq:gen_eig_b}
+     \Sigma_{21} \mathbf{a} = \rho_b \Sigma_{22} \mathbf{b} \implies \Sigma_{21} \left( \frac{\Sigma_{11}^{-1} \Sigma_{12} \mathbf{b}}{\rho} \right) = \rho \Sigma_{22} \mathbf{b} \implies (\Sigma_{21} \Sigma_{11}^{-1} \Sigma_{12} - \rho^2 \Sigma_{22})\mathbf{b} = 0
+\end{equation}
+
+In an analogous way, we can get the equation for the vectors $\mathbf{a}$ as:
+\begin{equation} \label{eq:gen_eig_a}
+    (\Sigma_{12} \Sigma_{22}^{-1} \Sigma_{21} - \rho^2 \Sigma_{11})\mathbf{a} = 0
+\end{equation}
+These equations are so called generalized eigenvalue problems. Special software is needed to solve these equations in a numerically stable and robust manner.
+
+\input{chapter_part_A/sol_population.tex}
+\input{chapter_part_A/sol_sample.tex}
+\input{chapter_part_A/HypothesisTesting.tex}

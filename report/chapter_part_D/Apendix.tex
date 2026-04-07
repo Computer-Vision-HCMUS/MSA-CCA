@@ -1,0 +1,54 @@
+
+\section{Proof of the Variance of Canonical Variates}
+
+Let $U$ be a canonical variate defined by the linear combination $U = X^{(1)}a$, where $X^{(1)}$ is a centered data matrix of size $n \times p$ and $a$ is the weight vector.
+
+\begin{itemize}
+    \item By definition, the variance of the random variable $U$ is given by:
+    \begin{equation}
+        Var(U) = E[(U - E[U])^T(U - E[U])]
+    \end{equation}
+    \item Since the data is centered, $E[X^{(1)}] = 0$, which implies $E[U] = E[X^{(1)}a] = 0$. The expression simplifies to:
+    \begin{equation}
+        Var(U) = E[(X^{(1)}a)^T(X^{(1)}a)]
+    \end{equation}
+    \item Applying the transpose property $(AB)^T = B^T A^T$:
+    \begin{equation}
+        Var(U) = E[a^T (X^{(1)})^T X^{(1)} a]
+    \end{equation}
+    \item Since $a$ is a constant vector of weights, it can be moved outside the expectation operator:
+    \begin{equation}
+        Var(U) = a^T E[(X^{(1)})^T X^{(1)}] a
+    \end{equation}
+    \item The term $E[(X^{(1)})^T X^{(1)}]$ represents the internal covariance matrix $\Sigma_{11}$ of the dataset $X^{(1)}$. Thus:
+    \begin{equation}
+        Var(U) = a^T \Sigma_{11} a
+    \end{equation}
+\end{itemize}
+
+\section{Proof of the Covariance Between Canonical Variates}
+
+Consider two canonical variates $U = X^{(1)}a$ and $V = X^{(2)}b$. The covariance representing the shared information between these two spaces is derived as follows:
+
+\begin{itemize}
+    \item The covariance between two centered variables $U$ and $V$ is defined as:
+    \begin{equation}
+        Cov(U, V) = E[U^T V]
+    \end{equation}
+    \item Substituting the definitions of $U$ and $V$:
+    \begin{equation}
+        Cov(U, V) = E[(X^{(1)}a)^T (X^{(2)}b)]
+    \end{equation}
+    \item Applying the transpose property:
+    \begin{equation}
+        Cov(U, V) = E[a^T (X^{(1)})^T X^{(2)} b]
+    \end{equation}
+    \item Factoring out the constant weight vectors $a^T$ and $b$:
+    \begin{equation}
+        Cov(U, V) = a^T E[(X^{(1)})^T X^{(2)}] b
+    \end{equation}
+    \item By definition, $E[(X^{(1)})^T X^{(2)}]$ is the cross-covariance matrix $\Sigma_{12}$ that captures the associations between the two sets. Therefore:
+    \begin{equation}
+        Cov(U, V) = a^T \Sigma_{12} b
+    \end{equation}
+\end{itemize}

@@ -1,0 +1,175 @@
+%Document type: Article
+\documentclass[12pt]{article}
+\usepackage[utf8]{vietnam}
+\usepackage{amsmath}
+\usepackage{pdflscape}
+\usepackage{lipsum}
+\usepackage{epigraph}
+\usepackage{amsfonts}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage[colorlinks=true,linkcolor=blue, citecolor=red,hypertexnames=false]{hyperref}
+\usepackage{url}
+\usepackage[top=.75in, left=.75in, right=.75in, bottom=1in]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{forest}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage[ruled,vlined]{algorithm2e}
+%Package for pseudocode 
+\usepackage{algpseudocode}
+
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{colortbl}
+\usepackage{array}
+
+\usepackage{listings}
+\usepackage{proof}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, shadows}
+
+
+\definecolor{ui-pink}{RGB}{230, 180, 180}   % Màu hồng cho Label
+\definecolor{ui-blue}{RGB}{180, 210, 240}   % Màu xanh cho Value
+\definecolor{ui-brown}{RGB}{160, 150, 100}  % Màu nền (nếu cần)
+\definecolor{ui-purple}{RGB}{120, 50, 120}  % Màu mũi tên
+\definecolor{ui-red}{RGB}{200, 50, 50}      % Màu chữ tiêu đề
+\definecolor{accentred}{RGB}{200, 50, 50}
+\definecolor{primaryblue}{RGB}{30, 90, 160}
+\definecolor{lightgray}{RGB}{245,245,245}
+\definecolor{backcolour}{RGB}{245,245,244}
+\definecolor{codegreen}{RGB}{0,128,0}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{codepurple}{RGB}{148,0,211}
+\hbadness=10000
+\vbadness=10000
+\hfuzz=30pt
+\vfuzz=400pt
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+%Header and Footer
+%Set footer
+\setlength{\headheight}{29.43912pt}
+\pagestyle{fancy}
+\fancyfoot{}
+\fancyfoot[R]{Page \thepage}
+
+%Left header and right header
+\lhead{CANONICAL CORRELATION ANALYSIS}
+\rhead{Phân tích thống kê dữ liệu nhiều biến
+}
+
+%For Quoting
+\makeatletter
+\newenvironment{chapquote}[2][2em]
+  {\setlength{\@tempdima}{#1}%
+   \def\chapquote@author{#2}%
+   \parshape 1 \@tempdima \dimexpr\textwidth-2\@tempdima\relax%
+   \itshape}
+  {\par\normalfont\hfill--\ \chapquote@author\hspace*{\@tempdima}\par\bigskip}
+\makeatother
+
+% Key highlighted box with optional title
+\newtcolorbox{keybox}[1][]{
+  enhanced,
+  colback=blue!3,
+  colframe=blue!50!black,
+  boxrule=0.8pt,
+  arc=2pt,
+  left=8pt,right=8pt,top=6pt,bottom=6pt,
+  title=#1,
+  fonttitle=\bfseries
+}
+
+%For landscape page
+\fancypagestyle{mylandscape}{
+\fancyhf{} %Clears the header/footer
+\fancyfoot{% Footer
+\makebox[\textwidth][r]{% Right
+  \rlap{\hspace{.75cm}% Push out of margin by \footskip
+    \smash{% Remove vertical height
+      \raisebox{4.87in}{% Raise vertically
+        \rotatebox{90}{page \thepage}}}}}}% Rotate counter-clockwise
+\renewcommand{\headrulewidth}{0pt}% No header rule
+\renewcommand{\footrulewidth}{0pt}% No footer rule
+}
+
+
+\usepackage{chngcntr}
+\usepackage{titlesec}
+% 1. Định dạng lại bộ đếm cho Part thành A, B, C
+\renewcommand{\thepart}{\Alph{part}}
+
+% 2. Định dạng lại bộ đếm cho Section thành 1, 2, 3
+\renewcommand{\thesection}{\arabic{section}}
+
+% 3. Reset số thứ tự Section mỗi khi sang Part mới
+\counterwithin*{section}{part}
+
+% 4. Tùy chỉnh hiển thị (Xóa chữ "Part/Phần", in đậm, màu đỏ)
+\titleformat{\part}[block]
+  {\bfseries\Large\color{blue}} % Kiểu chữ: Đậm, Lớn, Đỏ
+  {\thepart.}                  % Nhãn số: A., B.
+  {0.5em}                      % Khoảng cách giữa số và tên
+  {}
+% Math operators used across chapters
+\DeclareMathOperator{\Corr}{Corr}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\Var}{Var}
+
+% Avoid hyperref PDF-string warnings from spacing commands in headings
+\pdfstringdefDisableCommands{\def\quad{ }}
+
+%Start the document:
+\begin{document}
+\input{Trangbia}\newpage
+
+\tableofcontents
+\pagebreak
+\newpage
+
+\part{THEORY}\
+\input{chapter_part_A/Mục đích}
+\input{chapter_part_A/Phát biểu bài toán}
+\input{chapter_part_A/Phương pháp}
+\input{chapter_part_A/Ý nghĩa hình học}
+\input{chapter_part_A/Kiểm chứng tính đúng đắn}
+\input{chapter_part_A/Ví dụ}
+\newpage
+\part{EXPERIMENTAL APPLICATIONS}
+\input{chapter_part_B/Problem_Statement_App}
+
+\newpage
+\part{REFERENCES}
+\newpage
+\part{Apendix}
+\input{chapter_part_D/Apendix}
+
+\end{document}

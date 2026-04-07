@@ -1,0 +1,135 @@
+
+\section{Motivation and Context}
+\subsection{Overview} Canonical Correlation Analysis (CCA) is a multivariate statistical method to explore and measure the associations between two sets of variables observed on the same group of subjects.
+\subsection{Example}
+The problem arises from observing two multivariate datasets measured on the same set of subjects (for example, the matrix $\underset{n \times p}{X^{(1)}}$ contains $p=3$ physical exercise indicators (Chins, Situps, Jumps), while the matrix $\underset{n \times q}{X^{(2)}}$ contains $q=2$ physiological indicators (Weight, Waist) for a sample of $n=5$ subjects).
+\begin{table}[ht]
+    \centering
+    \caption{Subset of the Linnerud Dataset ($n=5$)}
+    \vspace{0.2cm}
+    \begin{tabular}{ccccccc}
+        \toprule
+        & \multicolumn{3}{c}{Exercise Variables ($X^{(1)}$)} & \multicolumn{2}{c}{Physiological Variables ($X^{(2)}$)} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-6}
+        Subject & Chins ($X^{(1)}_1$) & Situps ($X^{(1)}_2$) & Jumps ($X^{(1)}_3$) & Weight ($X^{(2)}_1$) & Waist ($X^{(2)}_2$) \\
+        \midrule
+        1 & 5  & 162 & 60  & 191 & 36 \\
+        2 & 2  & 110 & 60  & 189 & 37 \\
+        3 & 12 & 101 & 101 & 193 & 38 \\
+        4 & 12 & 105 & 37  & 162 & 35 \\
+        5 & 13 & 155 & 58  & 189 & 35 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+For mathematical computation, the data is structured into two observation matrices, $X^{(1)} \in \mathbb{R}^{5 \times 3}$ and $X^{(2)} \in \mathbb{R}^{5 \times 2}$:
+
+\begin{equation*}
+    X^{(1)} = \begin{pmatrix}
+    5 & 162 & 60 \\
+    2 & 110 & 60 \\
+    12 & 101 & 101 \\
+    12 & 105 & 37 \\
+    13 & 155 & 58
+    \end{pmatrix}, \quad
+    X^{(2)} = \begin{pmatrix}
+    191 & 36 \\
+    189 & 37 \\
+    193 & 38 \\
+    162 & 35 \\
+    189 & 35
+    \end{pmatrix}
+\end{equation*}
+% These matrices serve as the foundational inputs to compute the sample covariance matrices ($\Sigma_{11}, \Sigma_{22}, \Sigma_{12}$) required for extracting the canonical weights $\mathbf{a}$ and $\mathbf{b}$.
+
+\subsection{Goals of the CCA}
+This study uses CCA with two primary objectives:
+\begin{enumerate}[leftmargin=1.8em, label=\textbf{(\arabic*)}]
+  \item \textbf{Measure the strength of association between X1 and X2.}
+  Rather than relying on isolated pairwise correlations, CCA quantifies the relationship between two multivariate systems through canonical correlation coefficients.
+
+  \item \textbf{Identify informative linear combinations and variable importance.}
+  CCA builds linear combinations from X1 and X2 so that their shared variation is maximized. The resulting loading patterns provide interpretable evidence of how strongly each original variable contributes to the cross-set relationship.
+\end{enumerate}
+
+\subsection{Research Motivation}
+
+\subsubsection{Scientific Motivation}
+
+\textbf{Continuity with prior research.}
+Previous studies have demonstrated that CCA serves as an effective 
+denoising mechanism in multi-source data settings, particularly when 
+two views describe the same underlying phenomenon under differing 
+noise conditions. These findings provide a direct methodological 
+foundation for the present work and motivate a principled extension 
+of CCA to environmental data.
+
+\textbf{Methodological contributions of CCA.}
+From a statistical learning perspective, CCA offers three 
+theoretically grounded advantages over conventional single-set 
+methods:
+\begin{itemize}
+    \item \textit{Shared-information-oriented dimensionality 
+    reduction}: CCA seeks linear projections that maximize 
+    cross-view correlation rather than within-set variance, 
+    thereby preserving inter-domain structure that single-set 
+    methods would discard.
+
+    \item \textit{Intrinsic noise filtering}: canonical components 
+    with low cross-view correlation are suppressed by construction, 
+    so view-specific noise is naturally excluded from the learned 
+    representation without requiring explicit preprocessing.
+\end{itemize}
+
+\subsubsection{Practical Motivation}
+
+\textbf{Applied context: joint analysis of pollutant and 
+meteorological data.}
+A canonical applied domain for this framework is the joint 
+modelling of air-pollutant concentration data and meteorological 
+measurements in ground-level ozone research.
+Ozone formation is simultaneously governed by emission conditions 
+and atmospheric dynamics, constituting a prototypical two-view 
+problem in which neither source alone is sufficient for reliable 
+analysis.
+This structure aligns naturally with the CCA framework, where each 
+view captures a distinct but correlated aspect of the same 
+environmental process.
+
+\textbf{Practical significance of CCA.}
+CCA provides two major practical implications for real-world multi-view analysis:
+\begin{itemize}
+    \item \textit{Evidence-based variable selection}: by quantifying the strength of association between two variable sets, CCA replaces subjective feature selection with a statistically grounded framework, offering a principled basis for dimensionality reduction and model construction in any multi-view analytical pipeline.
+
+    \item \textit{Improved interpretability and discovery of latent cross-set structure}: by identifying canonical variate pairs with the highest correlation, CCA reveals hidden relationships between two datasets that isolated single-set methods cannot detect. This helps researchers develop a deeper understanding of the data-generating structure and derive conclusions with stronger practical relevance.
+\end{itemize}
+
+\subsection{Why CCA Is More Appropriate Than Alternative Approaches}
+A common question is why one should not simply concatenate X1 and X2 into a single dataset and compute one overall correlation structure.
+
+The reason is that this pooled strategy mixes two fundamentally different dependency structures:
+\begin{itemize}[leftmargin=1.8em]
+  \item \textbf{Within-set dependence}: relationships internal to X1 and internal to X2.
+  \item \textbf{Between-set dependence}: relationships linking X1 to X2, which is the scientific target.
+\end{itemize}
+
+When all variables are merged, strong within-set correlations may dominate and mask the true cross-set signal.
+CCA is more appropriate because it directly optimizes the association between X1 and X2 through paired latent directions, while accounting for the variance structure of each set. Therefore, CCA provides a cleaner and more interpretable answer to the central research question: how strongly, and through which latent directions, are X1 and X2 related?
+
+\subsection{Development of CCA problem}
+
+The evolution of CCA can be viewed as a logical progression from simple to complex data structures, moving from analyzing individual points to entire systems:
+
+\begin{enumerate} [leftmargin=1.8em, label=\textbf{(\arabic*)}]
+    \item \textbf{1-1 setting (Simple Correlation):} \\
+    This is the most fundamental level, focusing on the linear relationship between one variable from $X^{(1)}$ and one variable from $X^{(2)}$. This approach only captures isolated, pairwise connections. Its main limitation is the inability to see the "big picture" when variables within the same set interact with each other, leading to a loss of structural information.
+
+    \item \textbf{1-n setting (Multiple Correlation):} \\
+    At this stage, the problem expands to analyze the relationship between the entire set $X^{(1)}$ and only one representative variable from $X^{(2)}$. The goal is to combine all information in $X^{(1)}$ to best explain that single variable. However, this remains asymmetrical; it treats one side as a complex system and the other as a single point, failing to capture the mutual interaction between two multidimensional entities.
+
+    \item \textbf{CCA setting (Multivariate-to-Multivariate):} \\
+    This is the most advanced and complete stage, addressing the relationship between the whole set $X^{(1)}$ and the whole set $X^{(2)}$ simultaneously. Instead of picking individual variables, CCA synthesizes all features from both $X^{(1)}$ and $X^{(2)}$ to create "latent variables" that represent each set. The problem evolves into finding the specific "directions" for both sets such that when the data is projected onto them, the correlation between the two systems is maximized. This allows us to quantify the maximum possible "alignment" between two complex data systems, uncovering shared structures that 1-1 or 1-n methods simply cannot detect.
+\end{enumerate}
+
+
+

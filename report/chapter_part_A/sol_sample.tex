@@ -1,0 +1,37 @@
+\subsection{Solution of the sample CCA problem }
+In practical applications, the true population parameters are unknown. We estimate the canonical correlations and weights using the full Linnerud dataset n=20.
+\subsubsection{Data Centering}
+ Let $\mathbf{X}^{(1)} \in \mathbb{R}^{n \times p}$ and $\mathbf{X}^{(2)} \in \mathbb{R}^{n \times q}$ be the observed data matrices. For CCA to correctly identify relationships based on variance, the data must first be centered:
+\begin{equation}
+\bar{\mathbf{X}}^{(1)} =
+\mathbf{X}^{(1)} -
+\begin{pmatrix}
+1\\
+1\\
+\vdots\\
+1
+\end{pmatrix}
+\boldsymbol{\mu}^{(1)},
+\quad
+\bar{\mathbf{X}}^{(2)} =
+\mathbf{X}^{(2)} -
+\begin{pmatrix}
+1\\
+1\\
+\vdots\\
+1
+\end{pmatrix}
+\boldsymbol{\mu}^{(2)}
+\end{equation}
+ where $\boldsymbol{\mu}$ represents the vector of column means. This ensures that the variables have a mean of zero, allowing the subsequent matrix products to represent covariances.
+ \subsubsection{Sample Covariance Estimation}
+ The sample covariance matrices are estimated from the centered data as follows:\begin{equation}\hat{\Sigma}_{11} = \frac{1}{n-1}\bar{\mathbf{X}}^{(1)T}\bar{\mathbf{X}}^{(1)}, \quad \hat{\Sigma}_{22} = \frac{1}{n-1}\bar{\mathbf{X}}^{(2)T}\bar{\mathbf{X}}^{(2)}, \quad \hat{\Sigma}_{12} = \frac{1}{n-1}\bar{\mathbf{X}}^{(1)T}\bar{\mathbf{X}}^{(2)}
+\end{equation}
+where $\hat{\Sigma}_{11} \in \mathbb{R}^{p \times p}$ and $\hat{\Sigma}_{22} \in \mathbb{R}^{q \times q}$ represent the internal variance structures, and $\hat{\Sigma}_{12} \in \mathbb{R}^{p \times q}$ captures the cross-set associations.\subsubsection{ Solving the Empirical Eigenvalue Problem}
+We solve for the sample canonical weights by substituting the estimates into the standard eigenvalue problem:\begin{equation} \label{eq:sample_eig_b}(\hat{\Sigma}_{22}^{-1} \hat{\Sigma}_{21} \hat{\Sigma}_{11}^{-1} \hat{\Sigma}_{12}) \hat{\mathbf{b}}_i = \hat{\rho}_i^2 \hat{\mathbf{b}}i
+\end{equation}
+The sample canonical correlations $\hat{\rho}_i$ are the square roots of the eigenvalues. The weight vectors $\hat{\mathbf{a}}_i$ for the exercise set are then recovered:
+\begin{equation}
+\hat{\mathbf{a}}_i = \frac{\hat{\Sigma}_{11}^{-1} \hat{\Sigma}_{12} \hat{\mathbf{b}}_i}{\hat{\rho}_i}\end{equation}
+\subsubsection{ Computation of Sample Scores}
+The final canonical scores for the 20 subjects are obtained by projecting the centered data onto the estimated canonical directions:\begin{equation}\hat{\mathbf{u}}_i = \bar{\mathbf{X}}^{(1)} \hat{\mathbf{a}}_i, \qquad \hat{\mathbf{v}}_i = \bar{\mathbf{X}}^{(2)} \hat{\mathbf{b}}_i\end{equation}These scores $\hat{\mathbf{u}}_i, \hat{\mathbf{v}}_i \in \mathbb{R}^{n}$ provide a simplified, one-dimensional representation of each subject's position along the identified latent axes of "Physical Effort" and "Physiological Profile".

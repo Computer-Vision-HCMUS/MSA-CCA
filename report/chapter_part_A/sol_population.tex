@@ -1,0 +1,65 @@
+\subsection{Solution of the population CCA problem}
+Equation \eqref{eq:gen_eig_b} has the form of a generalized eigenvalue problem
+\[
+A\mathbf{b} = \lambda B\mathbf{b},
+\]
+where
+\[
+A = \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12}, \quad
+B = \Sigma_{22}, \quad
+\lambda = \rho^2.
+\]
+We can consider two cases here: the simple case when we only have the covariance matrices, or, the somewhat more involved case, when we have the original data matrices at our disposal.
+If $\Sigma_{22}$ is non-singular, the generalized eigenvalue problem
+can be converted into a standard eigenvalue problem by multiplying
+\eqref{eq:gen_eig_b} from the left by $\Sigma_{22}^{-1}$, yielding
+
+\begin{equation} \label{eq:eig_standard_b}
+    (\Sigma_{22}^{-1} \Sigma_{21} \Sigma_{11}^{-1} \Sigma_{12} - \rho^2 I)\mathbf{b} = 0
+\end{equation}
+
+Equation \eqref{eq:eig_standard_b} is a standard eigenvalue problem of the form
+
+\[
+M \mathbf{b} = \rho^2 \mathbf{b},
+\]
+
+where
+
+\[
+M = \Sigma_{22}^{-1} \Sigma_{21} \Sigma_{11}^{-1} \Sigma_{12}.
+\]
+
+Thus, the canonical correlations can be obtained by solving the
+eigenvalue problem for the matrix $M$. Let
+
+\[
+M \mathbf{b}_i = \lambda_i \mathbf{b}_i ,
+\]
+
+where $\lambda_i$ are the eigenvalues and $\mathbf{b}_i$ the corresponding
+eigenvectors. The canonical correlations are then given by
+
+\[
+\rho_i = \sqrt{\lambda_i}.
+\]
+
+Once the vectors $\mathbf{b}_i$ are obtained, the corresponding vectors
+$\mathbf{a}_i$ can be computed from equation \eqref{eq:deriv_a} as
+
+\[
+\mathbf{a}_i =
+\frac{\Sigma_{11}^{-1} \Sigma_{12} \mathbf{b}_i}{\rho_i}.
+\]
+
+The vectors $\mathbf{a}_i$ and $\mathbf{b}_i$ define the canonical
+directions, and the corresponding canonical variates are
+
+\[
+U_i = \mathbf{a}_i^T \mathbf{X}^{(1)}, \qquad
+V_i = \mathbf{b}_i^T \mathbf{X}^{(2)} .
+\]
+
+The number of non–zero canonical correlations is at most
+$\min(p,q)$.
+

@@ -1,0 +1,194 @@
+
+\section{Problem Statement}
+
+The mathematical framework of this study is built upon the principles of Canonical Correlation Analysis (CCA), a sophisticated multivariate statistical technique designed to identify and quantify the underlying associations between two distinct sets of random variables. 
+
+By serving as a strategic extension of Principal Component Analysis (PCA) into a multi-group data context, CCA facilitates the discovery of shared information across different data spaces.
+
+
+\subsection{ Methodological Foundation and Comparison with PCA}
+
+Principal Component Analysis (PCA) has long been the standard method in multivariate statistics for simplifying large datasets. The core objective of PCA is to address internal variance within a \textbf{single set of variables}. It achieves this by seeking specific directions, known as principal components, such that the variance of the data when projected onto these directions is maximized. In essence, PCA focuses on preserving the maximum amount of information and internal structural variation of an independent data entity, allowing for dimensionality reduction with minimal loss of original features.
+
+However, in many practical scenarios, data does not exist in isolation but appears as pairs of variable sets observed on the same group of subjects. This is where PCA reveals its limitations, as it is not designed to consider the relationship between two different information sources. If we were to apply PCA separately to each set, we might find the most important components for each side, but those components would not necessarily share any meaningful correlation or link with each other.
+
+
+
+Canonical Correlation Analysis (CCA) emerged as a strategic extension to address this gap. Unlike PCA, which processes a single set of variables, the primary goal of CCA is to optimize and simplify the relationship between two matrices: 
+\begin{equation*}
+    X^{(1)} \in \mathbb{R}^{n \times p} \quad \text{and} \quad X^{(2)} \in \mathbb{R}^{n \times q}
+\end{equation*}
+Instead of searching for directions of maximum variance within each set, CCA focuses on maximizing the correlation between the two. Its objective is to identify pairs of projection directions such that the projection of the first set and the projection of the second set achieve the highest possible degree of alignment or correlation.
+
+The fundamental distinction lies in the optimization philosophy:
+\begin{itemize}
+    \item \textbf{PCA} is an \textit{inward-looking} problem aimed at finding the best representation of a single system.
+    \item \textbf{CCA} is an \textit{outward-looking} problem aimed at finding the strongest connection between two systems.
+\end{itemize}
+
+Through this mechanism, CCA is capable of filtering out noise that exists only within individual sets and isolating the strongest common features. This makes CCA a superior tool for uncovering hidden patterns and interactive structures that single-set analysis methods like PCA simply cannot detect.
+
+
+\subsection{ Input}
+
+The problem formulation of Canonical Correlation Analysis (CCA) begins with two distinct sets of numerical data collected from the same group of $n$ observations. These datasets are represented as two primary data matrices:
+
+\begin{itemize}
+    \item \textbf{For the first group ($p$ variables):} The matrix $X^{(1)}$ of dimension $n \times p$ contains $n$ observations across $p$ features.
+    \begin{equation}
+    X_{n\times p}^{(1)} = \left( X_1^{(1)}, X_2^{(1)}, \dots, X_p^{(1)} \right) = 
+    \begin{pmatrix} 
+    x_{11}^{(1)} & \dots & x_{1p}^{(1)} \\ 
+    \vdots & \ddots & \vdots \\ 
+    x_{n1}^{(1)} & \dots & x_{np}^{(1)} 
+    \end{pmatrix}
+    \end{equation}
+
+    \item \textbf{For the second group ($q$ variables):} The matrix $X^{(2)}$ of dimension $n \times q$ contains the same $n$ observations but measured across $q$ different features.
+    \begin{equation}
+    X_{n\times q}^{(2)} = \left( X_1^{(2)}, X_2^{(2)}, \dots, X_q^{(2)} \right) = 
+    \begin{pmatrix} 
+    x_{11}^{(2)} & \dots & x_{1q}^{(2)} \\ 
+    \vdots & \ddots & \vdots \\ 
+    x_{n1}^{(2)} & \dots & x_{nq}^{(2)} 
+    \end{pmatrix}
+    \end{equation}
+\end{itemize}
+
+\paragraph{The Joint Covariance Structure}
+
+
+To analyze the relationship between these two matrices, the fundamental input used in the mathematical computation is the partitioned joint covariance matrix $\Sigma$. This matrix captures both the internal variance of each set and the cross-set interactions:
+\begin{equation}
+\Sigma = \begin{pmatrix} 
+\Sigma_{11} & \Sigma_{12} \\ 
+\Sigma_{21} & \Sigma_{22} 
+\end{pmatrix}
+\end{equation}
+Where:
+\begin{itemize}
+    \item $\Sigma_{11}$ ($p \times p$) and $\Sigma_{22}$ ($q \times q$) represent the within-set covariance matrices for $X^{(1)}$ and $X^{(2)}$, respectively.
+    \item $\Sigma_{12}$ ($p \times q$) and its transpose $\Sigma_{21}$ ($q \times p$) represent the cross-set covariance matrices, which encapsulate the linear dependencies between the two groups.
+\end{itemize}
+
+\paragraph{Construction of Canonical Variates}
+From these primary inputs, CCA seeks to synthesize the high-dimensional data into a more manageable and interpretable form. We construct aggregate variables, known as canonical variable vectors $U$ and $V$, through the following linear combinations:
+\begin{equation}
+U_{n\times 1} = X_{n\times p}^{(1)} a_{p\times 1} \quad \text{and} \quad V_{n\times 1} = X_{n\times q}^{(2)} b_{q\times 1}
+\end{equation}
+In this transformation:
+\begin{itemize}
+    \item $a$ and $b$ are the weight vectors that determine the direction of the projection in each respective variable space.
+    \item $U$ and $V$ are the resulting column vectors representing the scores of the $n$ observations on these new canonical dimensions.
+\end{itemize}
+
+The input stage effectively sets the foundation for the optimization process: we use the raw data matrices to derive the covariance structure, which then allows us to find the optimal weights $a$ and $b$ that align $U$ and $V$ as closely as possible.
+
+
+\subsection{Output}
+
+The objective of Canonical Correlation Analysis is to determine two sets of coefficient vectors, known as the canonical weight vectors,
+
+\begin{equation*}
+\mathbf{a} \in \mathbb{R}^{p \times 1}, \qquad 
+\mathbf{b} \in \mathbb{R}^{q \times 1},
+\end{equation*}
+
+which define the canonical variables
+
+\begin{equation*}
+U = X^{(1)}\mathbf{a}, \qquad 
+V = X^{(2)}\mathbf{b}.
+\end{equation*}
+
+These linear combinations represent aggregated variables that summarize each dataset while emphasizing their shared variation.
+
+
+\paragraph{The Correlation Metric}
+The strength of association between the two canonical variables is measured by the canonical correlation $\rho$:
+\begin{equation}
+\rho = \text{Corr}(U,V) = \frac{\text{Cov}(U,V)}{\sqrt{\text{Var}(U)\text{Var}(V)}} = \frac{\mathbf{a}^T \Sigma_{12} \mathbf{b}}{\sqrt{\mathbf{a}^T \Sigma_{11} \mathbf{a}} \sqrt{\mathbf{b}^T \Sigma_{22} \mathbf{b}}}
+\end{equation}
+
+Equation defines the correlation metric between two multivariate spaces through the following components:
+\begin{itemize}
+    \item \textbf{The Covariance Term ($\text{Cov}(U,V)$):} The numerator measures the shared information between the two datasets. It represents the degree to which the canonical variate $U$ (derived from the first group) and $V$ (derived from the second group) co-vary, capturing the linear dependency extracted via the cross-covariance structure.
+
+    \item \textbf{The Normalization Factor ($\sqrt{\text{Var}(U)\text{Var}(V)}$):} The denominator serves as a scaling mechanism using the product of the standard deviations of the constructed variables. This ensures that the canonical correlation $\rho$ is constrained within the interval $[0, 1]$, allowing for an objective assessment of the association that is invariant to the original units or scales of the input variables.
+\end{itemize}
+
+The CCA problem is therefore to determine the vectors $\mathbf{a}$ and $\mathbf{b}$ such that correlation of $U$ and $V$ is as large as possible:
+
+\begin{equation}
+\rho = 
+\max_{\mathbf{a},\mathbf{b}}
+\text{Corr}(X^{(1)}\mathbf{a}, X^{(2)}\mathbf{b}).
+\end{equation}
+
+This optimization serves as the core objective of the framework. Instead of calculating correlations between every individual pair of variables, CCA identifies the optimal directions within the multidimensional space of each dataset such that their projections onto these directions are as similar as possible. Through this process, CCA transforms the complex interaction between the two variable groups into a single interpretable measure of association.
+\paragraph{Multiple Canonical Pairs}
+
+
+In general, Canonical Correlation Analysis does not produce a single pair of canonical variables. 
+Given two variable sets of dimensions $p$ and $q$, the method can generate at most
+
+\begin{equation}
+k = \min(p, q)
+\end{equation}
+
+Where: p = Rank(X) and q = Rank(Y).
+
+pairs of canonical variables:
+
+\begin{equation}
+(U_1,V_1), (U_2,V_2), \dots, (U_k,V_k).
+\end{equation}
+
+The number of canonical pairs $k$ is constrained by the minimum value of $p$ and $q$ due to fundamental algebraic and geometric limitations. Specifically, the statistical interaction is captured by the $p \times q$ cross-covariance matrix $\Sigma_{12}$. Since the rank of this matrix cannot exceed its smallest dimension, the number of independent informational components is limited to $\min(p, q)$. Furthermore, each subsequent pair $(U_i, V_i)$ must remain uncorrelated with all previous pairs. Once the degrees of freedom in the smaller dataset are exhausted, no further orthogonal directions can be identified to form additional pairs.
+
+Each pair is associated with a canonical correlation coefficient
+
+\begin{equation}
+\rho_1 \ge \rho_2 \ge \dots \ge \rho_k,
+\end{equation}
+
+where the first pair $(U_1,V_1)$ maximizes the correlation between the two datasets, and subsequent pairs are obtained under the additional constraint of being uncorrelated with the previous canonical variables.
+
+
+
+\subsection{Constraints and the Strategic Role of Normalization}
+
+To ensure a unique and stable solution while maintaining comparability across different scales of measurement, Canonical Correlation Analysis imposes a set of fundamental constraints on the construction of the canonical variates.
+
+\paragraph{Unit-Variance Constraints}
+The primary constraint is to normalize the canonical variates $U$ and $V$ to have unit variance. This eliminates the arbitrary scaling effects of the original variables:
+\begin{equation}
+\text{Var}(U) = \mathbf{a}^T \Sigma_{11} \mathbf{a} = 1
+\end{equation}
+\begin{equation}
+\text{Var}(V) = \mathbf{b}^T \Sigma_{22} \mathbf{b} = 1
+\end{equation}
+where $\Sigma_{11}$ and $\Sigma_{22}$ represent the within-set covariance matrices. These constraints prevent variables with large numerical ranges from disproportionately influencing the results, shifting the analytical focus toward intrinsic interactions.
+
+\paragraph{Orthogonality and Uncorrelatedness}
+When extracting multiple pairs of canonical variables $(U_k, V_k)$, additional constraints are required to ensure that each pair captures unique information. To achieve a non-redundant decomposition of the relationship between the two datasets, each new pair must be uncorrelated with all previously identified pairs:
+
+\begin{align}
+    \text{Cov}(U_k, U_l) &= 0, \quad \forall k \neq l; \quad k, l = 1, 2, \dots, p \\
+    \text{Cov}(V_k, V_l) &= 0, \quad \forall k \neq l; \quad k, l = 1, 2, \dots, q \\
+    \text{Cov}(U_k, V_l) &= 0, \quad \forall k \neq l; \quad k, l = 1, 2, \dots, \min(p, q)
+\end{align}
+
+
+
+These constraints establish a framework where the canonical variates within the same group remain linearly independent to represent distinct directions of variance. Furthermore, they ensure that a canonical variate from one group exhibits zero correlation with any variate from the other group, except for its specific partner. This structured approach isolates each mode of interaction into independent channels, which are then ordered by their strength of correlation $\rho_k$.
+
+
+
+\paragraph{Strategic Role of Normalization}
+Mathematically, when variances are normalized to unity, the correlation coefficient converges directly to the covariance:
+\begin{equation}
+\text{Corr}(U, V) \rightarrow \text{Cov}(U, V)
+\end{equation}
+This provides a pure reflection of the structural similarity between the two groups. By enforcing these constraints, CCA transforms the optimization problem into a well-posed generalized eigenvalue problem, ensuring that the resulting canonical correlations $\rho_i$ are invariant to linear scaling of the original data.
+

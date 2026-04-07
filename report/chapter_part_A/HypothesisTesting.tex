@@ -1,0 +1,13 @@
+\subsection{Hypothesis Testing and Statistical Significance}
+
+After calculating the sample canonical correlations $\hat{\rho}_i$, we must determine whether these associations represent true relationships in the population or are merely products of sampling error.
+\subsubsection{Overall Test of Independence}
+The primary hypothesis tests whether there is any linear relationship between the two sets of variables:\begin{itemize}\item $H_0: \rho_1 = \rho_2 = \dots = \rho_k = 0$ (The two sets are independent)\item $H_1: \text{At least one } \rho_i \neq 0$ (There is at least one significant association)\end{itemize}where $k = \min(p, q)$.
+\subsubsection{Wilks' Lambda Statistic}
+The test is based on Wilks' Lambda ($\Lambda$), which measures the proportion of variance not explained by the canonical variables. It is calculated using the sample correlations:\begin{equation}\Lambda_1 = \prod_{i=1}^{k} (1 - \hat{\rho}_i^2)\end{equation}A value of $\Lambda$ near $0$ indicates a strong association, while a value near $1$ suggests independence.
+\subsubsection{Bartlett's Chi-square Transformation}
+For large samples, Bartlett proposed a transformation of $\Lambda$ to a Chi-square distribution to simplify the calculation of $p$-values. The test statistic is given by:\begin{equation}\chi^2 = - \left( n - 1 - \frac{p + q + 1}{2} \right) \ln \Lambda_1\end{equation}This statistic follows a Chi-square distribution with $\mathbf{df = p \times q}$ degrees of freedom.
+\subsubsection{Sequential Testing (Dimension Reduction)}
+If the overall $H_0$ is rejected, we conclude that the first pair of canonical variables is significant. We then proceed to test if the remaining correlations are significant by "peeling off" the first one:\begin{equation}\Lambda_m = \prod_{i=m}^{k} (1 - \hat{\rho}_i^2)\end{equation}The degrees of freedom for each subsequent step $m$ are adjusted to:\begin{equation}df = (p - m + 1)(q - m + 1)\end{equation}This sequential process allows us to determine the exact number of significant canonical dimensions to interpret.
+\subsubsection{Application to Linnerud Dataset }
+For the full Linnerud dataset ($p=3, q=2$), we have:\begin{itemize}\item Step 1: Overall test ($m=1$) with $df = 3 \times 2 = 6$.\item Step 2: Testing the remaining correlation ($m=2$) with $df = (3-1)(2-1) = 2$.\end{itemize}If the $p$-value for Step 1 is less than the significance level (e.g., $\alpha = 0.05$), we reject the null hypothesis and proceed to interpret the first canonical dimension.
