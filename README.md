@@ -88,6 +88,35 @@ Features:
 - Real-time visualization
 - Download results as CSV files
 
+#### Data Description For `demo_app.py`
+
+`demo_app.py` supports 3 data input modes:
+
+1. **Default files**: `AQ_X1.csv` and `AQ_X2.csv`
+   - Paired air-quality sample data shipped with the repo
+   - `AQ_X1.csv` contains environmental variables (e.g., temperature, humidity)
+   - `AQ_X2.csv` contains pollutant variables (e.g., CO, NOx, NO2)
+   - Both files must represent the same observations in the same row order
+
+2. **Upload CSV**
+   - Upload two files: one for X (`X1`) and one for Y (`X2`)
+   - Required format:
+     - Numeric columns only (CCA expects numeric features)
+     - Same number of rows in `X1` and `X2`
+     - Each row is one matched sample across both sets
+   - The app drops unnamed index columns and empty columns, then removes rows with missing values
+
+3. **Direct input (table or paste)**
+   - Enter X and Y manually in editable tables, or paste matrix-like text
+   - Rows are treated as samples and columns as variables
+   - Pasted values can be separated by comma, tab, or spaces
+   - X and Y must have the same number of rows
+   - Empty cells are filled with `0` before running CCA
+
+**Recommendation**:
+- Enable standardization for most datasets (especially when variable scales differ).
+- Keep rows aligned across X and Y; CCA assumes row `i` in X corresponds to row `i` in Y.
+
 ### Method 3: Python Script
 
 Use the modules in your own Python code:

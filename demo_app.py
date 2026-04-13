@@ -269,6 +269,32 @@ try:
         value=max_components,
         help="Number of canonical components to compute"
     )
+
+    st.markdown("##### 🧾 Mô tả dữ liệu đang dùng")
+    info_col1, info_col2 = st.columns(2)
+    with info_col1:
+        st.markdown(
+            f"""
+            - **X1**: `{X1.shape[0]}` samples, `{X1.shape[1]}` cột
+            - **Cột X1**: {", ".join(map(str, X1.columns))}
+            """
+        )
+    with info_col2:
+        st.markdown(
+            f"""
+            - **X2**: `{X2.shape[0]}` samples, `{X2.shape[1]}` cột
+            - **Cột X2**: {", ".join(map(str, X2.columns))}
+            """
+        )
+
+    st.markdown("##### 🔍 Preview 5 dòng dữ liệu")
+    preview_col1, preview_col2 = st.columns(2)
+    with preview_col1:
+        st.caption("X1 (5 dòng đầu)")
+        st.dataframe(X1.head(5), use_container_width=True)
+    with preview_col2:
+        st.caption("X2 (5 dòng đầu)")
+        st.dataframe(X2.head(5), use_container_width=True)
     
     # Run CCA button
     if st.button("🚀 Run CCA Analysis", type="primary", use_container_width=True):
