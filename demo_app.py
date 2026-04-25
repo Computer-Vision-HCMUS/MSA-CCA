@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.stats import chi2
+from sklearn.cross_decomposition import CCA as SklearnCCA
 from utils import read_csv, analyze_data, standardize_data
 from core import CCA
 from geometry_cca import (
@@ -416,11 +418,12 @@ try:
         st.subheader("📊 Visualizations")
         
         # Tabs for different visualizations
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
             "Canonical Correlations",
             "Canonical Variates",
             "Weights",
             "Loadings",
+            "Statistical Tests",
             "📐 Geometric meaning",
         ])
         
@@ -548,8 +551,47 @@ try:
                 ax.set_title('X2 Loadings', fontweight='bold')
                 plt.tight_layout()
                 st.pyplot(fig)
-        
+
         with tab5:
+            st.write("**1. Wilks' Lambda & Overall Significance**")
+            rc_sq = cca.canonical_correlations ** 2
+            wilks_lambda = np.prod(1 - rc_sq)
+            n = len(st.session_state.X1_proc)
+            p = st.session_state.X1_proc.shape[1]
+            q = st.session_state.X2_proc.shape[1]
+
+            chi2_stat = -(n - 1 - (p + q + 1) / 2) * np.log(wilks_lambda)
+            df_chi2 = p * q
+            p_value = 1 - chi2.cdf(chi2_stat, df_chi2)
+
+            st.write(f"- Wilks' Lambda: {wilks_lambda:.4f}")
+            st.write(f"- Chi-square statistic: {chi2_stat:.4f}")
+            st.write(f"- P-value: {p_value:.4e}")
+
+            st.write("**2. Redundancy Analysis (X2)**")
+            y_variance_explained = np.mean(cca.y_loadings ** 2, axis=0)
+            redundancy = y_variance_explained * rc_sq
+
+            for i, red in enumerate(redundancy):
+                st.write(f"- CC{i+1} giải thích {red*100:.2f}% phương sai của tập X2.")
+            st.write(f"**Tổng phương sai X2 được giải thích: {np.sum(redundancy)*100:.2f}%**")
+
+            st.write("**3. Permutation Test (CC1)**")
+            if st.button("Run Permutation Test (1000 iterations)"):
+                with st.spinner("Running..."):
+                    count_greater = 0
+                    n_perm = 1000
+                    for _ in range(n_perm):
+                        X2_perm = np.random.permutation(st.session_state.X2_proc)
+                        cca_perm = SklearnCCA(n_components=1)
+                        cca_perm.fit(st.session_state.X1_proc, X2_perm)
+                        X_c_perm, Y_c_perm = cca_perm.transform(st.session_state.X1_proc, X2_perm)
+                        rc_perm = np.corrcoef(X_c_perm[:, 0], Y_c_perm[:, 0])[0, 1]
+                        if rc_perm >= cca.canonical_correlations[0]:
+                            count_greater += 1
+                    st.success(f"P-value từ hoán vị: {count_greater / n_perm:.4f}")
+        
+        with tab6:
             st.markdown("### Geometric meaning of CCA")
             st.markdown(get_geometry_description(cca, language="en"))
             st.markdown("---")
