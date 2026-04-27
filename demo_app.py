@@ -166,6 +166,7 @@ try:
                 st.warning("Vui lòng dán cả hai tập X và Y.")
                 st.stop()
             def parse_paste(text):
+                """Execute parse paste."""
                 rows = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
                 data = []
                 for ln in rows:
@@ -351,6 +352,7 @@ try:
         st.subheader("📐 Từng bước thuật toán CCA")
         
         def _df_mat(mat, index=None, columns=None):
+            """Internal helper that df mat."""
             return pd.DataFrame(mat, index=index, columns=columns)
         
         with st.expander("1️⃣ Center — centerX, centerY (trung bình mẫu)", expanded=True):

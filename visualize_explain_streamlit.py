@@ -70,6 +70,7 @@ st.markdown("")
 st.header("2. Load data (X¹ and X²)")
 
 def load_data():
+    """Execute load data."""
     if use_default:
         try:
             X1 = read_csv("AQ_X1.csv")

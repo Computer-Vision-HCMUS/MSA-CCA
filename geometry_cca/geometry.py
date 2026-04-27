@@ -23,12 +23,14 @@ if TYPE_CHECKING:
 # =========================
 
 def get_canonical_angles_degrees(cca):
+    """Convert canonical correlations to geometric angles in degrees."""
     r = np.asarray(cca.canonical_correlations)
     r = np.clip(r, -1.0, 1.0)
     return np.degrees(np.arccos(r))
 
 
 def get_geometry_description(cca, language="vi"):
+    """Return a human-readable interpretation of CCA as angle minimization."""
     r = cca.canonical_correlations
     angles = get_canonical_angles_degrees(cca)
 
@@ -66,6 +68,7 @@ def plot_cca_geometry(cca, component=0, figsize=(12, 6)):
     # Helper: draw vector
     # -------------------------
     def draw_vec(base, vec, color, label):
+        """Draw a vector arrow with a label in the current axis."""
         ax.arrow(
             base[0], base[1],
             vec[0], vec[1],
@@ -184,6 +187,7 @@ def plot_cca_geometry(cca, component=0, figsize=(12, 6)):
 # =========================
 
 def plot_correlation_angle(cca):
+    """Plot canonical correlations and their equivalent principal angles."""
     r = cca.canonical_correlations
     angles = get_canonical_angles_degrees(cca)
 
@@ -415,6 +419,7 @@ def plot_cca_variable_spaces_canonical(
 
     # ---- Canonical direction (2D) from weights using selected indices
     def _norm2(v: np.ndarray) -> np.ndarray:
+        """Normalize a 2D vector and return a safe fallback for zero norm."""
         v = np.asarray(v, dtype=float).ravel()
         n = float(np.linalg.norm(v))
         if n < 1e-15:
@@ -455,9 +460,11 @@ def plot_cca_variable_spaces_canonical(
 
     def vec_tip(Oc: np.ndarray, v: np.ndarray) -> np.ndarray:
         # In geo.html: yPt(v) = [Ox + v.x*sc, Oy - v.y*sc]
+        """Map a local direction vector to a canvas-space endpoint."""
         return np.array([Oc[0] + v[0] * sc, Oc[1] - v[1] * sc], dtype=float)
 
     def draw_arrow(base: np.ndarray, tip: np.ndarray, color: str, lw: float, ms: float = 12) -> None:
+        """Render a styled arrow from base to tip in canvas coordinates."""
         ax.annotate(
             "",
             xy=(float(tip[0]), float(tip[1])),
@@ -468,6 +475,7 @@ def plot_cca_variable_spaces_canonical(
 
     def draw_plane(cx: float, cy: float, label: str) -> None:
         # drawPlane() in geo.html
+        """Draw a skewed conceptual variable plane and its caption."""
         pts = np.array(
             [
                 [cx - 60, cy + 80],
